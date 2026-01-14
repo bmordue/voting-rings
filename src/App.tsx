@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Histogram } from '@/components/Histogram';
 import { GameDetails } from '@/components/GameDetails';
-import { runSimulation, calculateStatistics, VotingGame } from '@/lib/voting-game';
+import { runSimulation, calculateStatistics, VotingGame, SimulationResult } from '@/lib/voting-game';
 import { Play, ChartBar, Eye, ArrowClockwise, Info } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
@@ -17,7 +17,7 @@ function App() {
   const [loyalists, setLoyalists] = useState(16);
   const [traitors, setTraitors] = useState(4);
   const [iterations, setIterations] = useState(1000);
-  const [results, setResults] = useState<number[]>([]);
+  const [results, setResults] = useState<SimulationResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sampleGame, setSampleGame] = useState<ReturnType<VotingGame['run']> | null>(null);
@@ -38,7 +38,7 @@ function App() {
 
     const batchSize = 100;
     const batches = Math.ceil(iterations / batchSize);
-    const allResults: number[] = [];
+    const allResults: SimulationResult[] = [];
 
     for (let i = 0; i < batches; i++) {
       const currentBatchSize = Math.min(batchSize, iterations - i * batchSize);
