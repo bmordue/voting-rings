@@ -85,11 +85,16 @@ export function Histogram({ data, width = 800, height = 400 }: HistogramProps) {
     g.selectAll('.domain, .tick line')
       .style('stroke', 'oklch(0.90 0.005 250)');
 
-    // Colors from PRD: Loyalist Blue and Traitor Red
+    // Color scheme: Blue for loyalist wins, Red for traitor wins
     const loyalistColor = 'oklch(0.65 0.15 240)';
     const traitorColor = 'oklch(0.60 0.20 25)';
     const loyalistHoverColor = 'oklch(0.70 0.17 240)';
     const traitorHoverColor = 'oklch(0.65 0.22 25)';
+
+    // Helper function to create tooltip content
+    const createTooltipHtml = (d: HistDataPoint) => {
+      return `<strong>${d.rounds} rounds</strong><br/>Loyalist wins: ${d.loyalistWins} (${((d.loyalistWins / data.length) * 100).toFixed(1)}%)<br/>Traitor wins: ${d.traitorWins} (${((d.traitorWins / data.length) * 100).toFixed(1)}%)`;
+    };
 
     // Create loyalist win bars (bottom of stack)
     const loyalistBars = g
@@ -159,7 +164,7 @@ export function Histogram({ data, width = 800, height = 400 }: HistogramProps) {
 
         tooltip
           .style('opacity', 1)
-          .html(`<strong>${d.rounds} rounds</strong><br/>Loyalist wins: ${d.loyalistWins} (${((d.loyalistWins / data.length) * 100).toFixed(1)}%)<br/>Traitor wins: ${d.traitorWins} (${((d.traitorWins / data.length) * 100).toFixed(1)}%)`);
+          .html(createTooltipHtml(d));
       })
       .on('mousemove', function (event) {
         tooltip
@@ -185,7 +190,7 @@ export function Histogram({ data, width = 800, height = 400 }: HistogramProps) {
 
         tooltip
           .style('opacity', 1)
-          .html(`<strong>${d.rounds} rounds</strong><br/>Loyalist wins: ${d.loyalistWins} (${((d.loyalistWins / data.length) * 100).toFixed(1)}%)<br/>Traitor wins: ${d.traitorWins} (${((d.traitorWins / data.length) * 100).toFixed(1)}%)`);
+          .html(createTooltipHtml(d));
       })
       .on('mousemove', function (event) {
         tooltip
