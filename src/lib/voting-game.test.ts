@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { VotingGame, runSimulation, calculateStatistics } from '../lib/voting-game'
+import { VotingGame, runSimulation, calculateStatistics } from './voting-game'
 
 describe('VotingGame', () => {
   describe('constructor', () => {
