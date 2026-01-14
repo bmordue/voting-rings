@@ -1,5 +1,6 @@
 export type ActorType = 'loyalist' | 'traitor';
 export type ActorStatus = 'active' | 'removed';
+export type EndCondition = 'first_traitor_removed' | 'all_one_type';
 
 export interface Actor {
   id: number;
@@ -23,16 +24,19 @@ export interface RoundResult {
 export interface GameResult {
   rounds: RoundResult[];
   totalRounds: number;
-  outcome: 'traitor_removed' | 'no_loyalists';
+  outcome: 'traitor_removed' | 'no_loyalists' | 'all_loyalists' | 'all_traitors';
+  endCondition: EndCondition;
 }
 
 export class VotingGame {
   private actors: Actor[];
   private roundHistory: RoundResult[] = [];
   private currentRound = 0;
+  private endCondition: EndCondition;
 
-  constructor(loyalistCount: number, traitorCount: number) {
+  constructor(loyalistCount: number, traitorCount: number, endCondition: EndCondition = 'first_traitor_removed') {
     this.actors = [];
+    this.endCondition = endCondition;
     
     for (let i = 0; i < loyalistCount; i++) {
       this.actors.push({
@@ -146,12 +150,28 @@ export class VotingGame {
     const activeTraitors = this.getActiveTraitors();
     const activeLoyalists = this.getActiveLoyalists();
     
-    return activeTraitors.length === 0 || activeLoyalists.length === 0;
+    if (this.endCondition === 'first_traitor_removed') {
+      return activeTraitors.length === 0 || activeLoyalists.length === 0;
+    } else {
+      // 'all_one_type': only end when all remaining actors are of the same type
+      return activeTraitors.length === 0 || activeLoyalists.length === 0;
+    }
   }
 
-  private getOutcome(): 'traitor_removed' | 'no_loyalists' {
+  private getOutcome(): 'traitor_removed' | 'no_loyalists' | 'all_loyalists' | 'all_traitors' {
     const activeTraitors = this.getActiveTraitors();
-    return activeTraitors.length === 0 ? 'traitor_removed' : 'no_loyalists';
+    const activeLoyalists = this.getActiveLoyalists();
+    
+    if (this.endCondition === 'first_traitor_removed') {
+      return activeTraitors.length === 0 ? 'traitor_removed' : 'no_loyalists';
+    } else {
+      // 'all_one_type'
+      if (activeTraitors.length === 0) {
+        return 'all_loyalists';
+      } else {
+        return 'all_traitors';
+      }
+    }
   }
 
   public run(): GameResult {
@@ -160,7 +180,8 @@ export class VotingGame {
 
       const phaseOne = this.resolvePhaseOne();
       
-      if (this.isGameOver()) {
+      // For 'first_traitor_removed', check if game is over after phase 1
+      if (this.endCondition === 'first_traitor_removed' && this.isGameOver()) {
         this.roundHistory.push({
           roundNumber: this.currentRound,
           phaseOneVotes: phaseOne.votes,
@@ -181,6 +202,7 @@ export class VotingGame {
         remainingActors: this.getActiveActors().map(a => ({ ...a }))
       });
 
+      // For both conditions, check after both phases are complete
       if (this.isGameOver()) {
         break;
       }
@@ -189,16 +211,17 @@ export class VotingGame {
     return {
       rounds: this.roundHistory,
       totalRounds: this.currentRound,
-      outcome: this.getOutcome()
+      outcome: this.getOutcome(),
+      endCondition: this.endCondition
     };
   }
 }
 
-export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number): number[] {
+export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number, endCondition: EndCondition = 'first_traitor_removed'): number[] {
   const results: number[] = [];
   
   for (let i = 0; i < iterations; i++) {
-    const game = new VotingGame(loyalistCount, traitorCount);
+    const game = new VotingGame(loyalistCount, traitorCount, endCondition);
     const result = game.run();
     results.push(result.totalRounds);
   }

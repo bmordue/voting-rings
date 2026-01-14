@@ -7,9 +7,10 @@ import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Histogram } from '@/components/Histogram';
 import { GameDetails } from '@/components/GameDetails';
-import { runSimulation, calculateStatistics, VotingGame } from '@/lib/voting-game';
+import { runSimulation, calculateStatistics, VotingGame, EndCondition } from '@/lib/voting-game';
 import { Play, ChartBar, Eye, ArrowClockwise, Info } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
@@ -17,6 +18,7 @@ function App() {
   const [loyalists, setLoyalists] = useState(16);
   const [traitors, setTraitors] = useState(4);
   const [iterations, setIterations] = useState(1000);
+  const [endCondition, setEndCondition] = useState<EndCondition>('first_traitor_removed');
   const [results, setResults] = useState<number[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -45,7 +47,7 @@ function App() {
       
       await new Promise(resolve => setTimeout(resolve, 0));
       
-      const batchResults = runSimulation(currentBatchSize, loyalists, traitors);
+      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, endCondition);
       allResults.push(...batchResults);
       
       setProgress(((i + 1) / batches) * 100);
@@ -53,7 +55,7 @@ function App() {
 
     setResults(allResults);
     
-    const game = new VotingGame(loyalists, traitors);
+    const game = new VotingGame(loyalists, traitors, endCondition);
     const gameResult = game.run();
     setSampleGame(gameResult);
     
@@ -158,6 +160,19 @@ function App() {
                   max={10000}
                   step={10}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="endCondition">End Condition</Label>
+                <Select value={endCondition} onValueChange={(value) => setEndCondition(value as EndCondition)}>
+                  <SelectTrigger id="endCondition">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="first_traitor_removed">First Traitor Removed</SelectItem>
+                    <SelectItem value="all_one_type">All One Type Remaining</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex gap-2">
@@ -311,9 +326,13 @@ function App() {
 
               <div>
                 <h4 className="font-semibold mb-2">Game End</h4>
-                <p className="text-muted-foreground">
-                  The game ends when either a traitor is removed (loyalists win) or no loyalists remain (traitors win).
+                <p className="text-muted-foreground mb-2">
+                  The game ending condition can be configured:
                 </p>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  <li><strong>First Traitor Removed:</strong> The game ends when either a traitor is removed (loyalists win) or no loyalists remain (traitors win).</li>
+                  <li><strong>All One Type Remaining:</strong> The game continues until all remaining actors are either loyalists (loyalists win) or all traitors (traitors win).</li>
+                </ul>
               </div>
             </div>
           </CardContent>
