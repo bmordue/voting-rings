@@ -7,9 +7,10 @@ import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Histogram } from '@/components/Histogram';
 import { GameDetails } from '@/components/GameDetails';
-import { runSimulation, calculateStatistics, VotingGame, SimulationResult } from '@/lib/voting-game';
+import { runSimulation, calculateStatistics, VotingGame, SimulationResult, type GameType } from '@/lib/voting-game';
 import { Play, ChartBar, Eye, ArrowClockwise, Info } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
@@ -17,6 +18,7 @@ function App() {
   const [loyalists, setLoyalists] = useState(16);
   const [traitors, setTraitors] = useState(4);
   const [iterations, setIterations] = useState(1000);
+  const [gameType, setGameType] = useState<GameType>('random');
   const [results, setResults] = useState<SimulationResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -45,7 +47,7 @@ function App() {
       
       await new Promise(resolve => setTimeout(resolve, 0));
       
-      const batchResults = runSimulation(currentBatchSize, loyalists, traitors);
+      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, gameType);
       allResults.push(...batchResults);
       
       setProgress(((i + 1) / batches) * 100);
@@ -53,7 +55,7 @@ function App() {
 
     setResults(allResults);
     
-    const game = new VotingGame(loyalists, traitors);
+    const game = new VotingGame(loyalists, traitors, gameType);
     const gameResult = game.run();
     setSampleGame(gameResult);
     
@@ -94,6 +96,24 @@ function App() {
               <CardDescription>Configure the initial game state</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="gameType">Voting Strategy</Label>
+                <Select value={gameType} onValueChange={(value: GameType) => setGameType(value)}>
+                  <SelectTrigger id="gameType" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="random">Random</SelectItem>
+                    <SelectItem value="fixate">Fixate on Suspect</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {gameType === 'random' 
+                    ? 'Loyalists vote randomly each round' 
+                    : 'Loyalists fixate on a suspect until removed'}
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="loyalists">Loyalists</Label>
@@ -295,7 +315,8 @@ function App() {
                 <h4 className="font-semibold mb-2">Phase 1: Voting</h4>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                   <li>Each actor votes to remove one other actor</li>
-                  <li>Loyalists vote randomly for anyone except themselves</li>
+                  <li><strong>Random Strategy:</strong> Loyalists vote randomly for anyone except themselves</li>
+                  <li><strong>Fixate Strategy:</strong> Each loyalist votes for the same suspect until that actor is removed, then selects a new random suspect</li>
                   <li>Traitors vote randomly for any loyalist</li>
                   <li>The actor with the most votes is removed</li>
                   <li>If there's a tie, a run-off vote occurs between tied actors only</li>
