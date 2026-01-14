@@ -98,7 +98,14 @@ function App() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="gameType">Voting Strategy</Label>
-                <Select value={gameType} onValueChange={(value: GameType) => setGameType(value)}>
+                <Select 
+                  value={gameType} 
+                  onValueChange={(value) => {
+                    if (value === 'random' || value === 'fixate') {
+                      setGameType(value);
+                    }
+                  }}
+                >
                   <SelectTrigger id="gameType" className="w-full">
                     <SelectValue />
                   </SelectTrigger>

@@ -33,6 +33,7 @@ export class VotingGame {
   private currentRound = 0;
   private gameType: GameType;
   private loyalistSuspects: Map<number, number> = new Map(); // Maps loyalist ID to their suspect ID
+  private static readonly NO_VALID_TARGET = -1;
 
   constructor(loyalistCount: number, traitorCount: number, gameType: GameType = 'random') {
     this.actors = [];
@@ -76,7 +77,7 @@ export class VotingGame {
     const validTargets = activeActors.filter(a => a.id !== loyalistId);
     
     if (validTargets.length === 0) {
-      return -1;
+      return VotingGame.NO_VALID_TARGET;
     }
 
     // Check if loyalist has an existing suspect
@@ -112,7 +113,7 @@ export class VotingGame {
         // Loyalist voting strategy depends on game type
         if (this.gameType === 'fixate') {
           const suspectId = this.getSuspectForLoyalist(actor.id);
-          if (suspectId !== -1) {
+          if (suspectId !== VotingGame.NO_VALID_TARGET) {
             targetId = suspectId;
           }
           // If no valid suspect, skip this vote (continue)
