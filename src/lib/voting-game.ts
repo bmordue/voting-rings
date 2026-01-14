@@ -194,19 +194,27 @@ export class VotingGame {
   }
 }
 
-export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number): number[] {
-  const results: number[] = [];
+export interface SimulationResult {
+  rounds: number;
+  outcome: 'traitor_removed' | 'no_loyalists';
+}
+
+export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number): SimulationResult[] {
+  const results: SimulationResult[] = [];
   
   for (let i = 0; i < iterations; i++) {
     const game = new VotingGame(loyalistCount, traitorCount);
     const result = game.run();
-    results.push(result.totalRounds);
+    results.push({
+      rounds: result.totalRounds,
+      outcome: result.outcome
+    });
   }
   
   return results;
 }
 
-export function calculateStatistics(rounds: number[]): {
+export function calculateStatistics(results: SimulationResult[]): {
   mean: number;
   median: number;
   mode: number;
@@ -214,10 +222,11 @@ export function calculateStatistics(rounds: number[]): {
   max: number;
   stdDev: number;
 } {
-  if (rounds.length === 0) {
+  if (results.length === 0) {
     return { mean: 0, median: 0, mode: 0, min: 0, max: 0, stdDev: 0 };
   }
 
+  const rounds = results.map(r => r.rounds);
   const sorted = [...rounds].sort((a, b) => a - b);
   const min = sorted[0];
   const max = sorted[sorted.length - 1];
