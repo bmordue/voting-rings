@@ -1,0 +1,373 @@
+# Implementation Plan: Make All Simulated Games Visible
+
+## Feature Overview
+
+This feature will expose a list of all the games in a simulation run so users can drill down into any specific game and see all the rounds. Currently, users can only view a single randomly selected sample game after running a simulation. This enhancement will provide complete visibility into all simulation results.
+
+## Current State Analysis
+
+### Existing Implementation
+
+The current application (`src/App.tsx`) includes:
+- Monte Carlo simulation that runs multiple iterations of the voting game
+- A histogram visualization showing the distribution of rounds-to-completion
+- A single "sample game" that users can view in a dialog
+- The `runSimulation()` function returns only an array of round counts (numbers)
+- Individual game details (round-by-round progression) are not stored from the simulation
+
+### Existing Components
+- `GameDetails.tsx` - Already displays round-by-round breakdown for a single game
+- `Histogram.tsx` - D3-based visualization of results distribution
+- `VotingGame` class - Runs individual games and returns detailed `GameResult` objects
+
+### Data Flow Gap
+
+The key issue is that `runSimulation()` in `src/lib/voting-game.ts` currently only returns the round counts:
+
+```typescript
+export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number): number[] {
+  const results: number[] = [];
+  
+  for (let i = 0; i < iterations; i++) {
+    const game = new VotingGame(loyalistCount, traitorCount);
+    const result = game.run();
+    results.push(result.totalRounds); // Only storing round count!
+  }
+  
+  return results;
+}
+```
+
+The full `GameResult` objects (containing all round details) are discarded.
+
+## Technical Requirements
+
+### 1. Data Structure Changes
+
+**Modify `runSimulation()` function:**
+```typescript
+// Return full game results instead of just round counts
+export function runSimulation(
+  iterations: number, 
+  loyalistCount: number, 
+  traitorCount: number
+): GameResult[] {
+  const results: GameResult[] = [];
+  
+  for (let i = 0; i < iterations; i++) {
+    const game = new VotingGame(loyalistCount, traitorCount);
+    const result = game.run();
+    results.push(result);
+  }
+  
+  return results;
+}
+```
+
+**Add game identifier:**
+Consider adding a unique ID to each game for easier tracking:
+```typescript
+export interface GameResult {
+  id?: string; // Optional UUID or simple counter
+  rounds: RoundResult[];
+  totalRounds: number;
+  outcome: 'traitor_removed' | 'no_loyalists';
+}
+```
+
+### 2. State Management Updates
+
+**In `App.tsx`, update state:**
+```typescript
+// Change from:
+const [results, setResults] = useState<number[]>([]);
+
+// To:
+const [results, setResults] = useState<GameResult[]>([]);
+```
+
+**Update statistics calculation:**
+The `calculateStatistics()` function currently accepts `number[]`. Either:
+- Modify it to accept `GameResult[]` and extract round counts internally
+- Call it with `results.map(r => r.totalRounds)` when needed
+
+### 3. UI Components
+
+#### A. Game List Component
+
+Create a new component `GameList.tsx`:
+```typescript
+interface GameListProps {
+  games: GameResult[];
+  loyalistCount: number;
+  traitorCount: number;
+  onSelectGame: (game: GameResult) => void;
+}
+```
+
+**Features:**
+- Display all games in a scrollable list or table
+- Show key information per game:
+  - Game number/ID
+  - Total rounds
+  - Outcome (traitor removed vs no loyalists)
+  - Quick stats (e.g., which traitor was removed)
+- Support sorting by:
+  - Game number (default)
+  - Total rounds (ascending/descending)
+  - Outcome type
+- Support filtering by:
+  - Outcome type
+  - Round count range
+- Search/jump to specific game number
+- Click on any game to view full details
+
+**Design considerations:**
+- Use a `Table` component from shadcn/ui for structured data display
+- Use `Badge` components to show outcomes (matching existing style)
+- Use `ScrollArea` for handling large numbers of games
+- Implement virtualization if dealing with >1000 games for performance
+
+#### B. Enhanced Histogram Interaction
+
+Modify `Histogram.tsx` to make it interactive:
+- When user clicks on a bar, show all games with that specific round count
+- Add a callback prop: `onBarClick?: (roundCount: number) => void`
+- Update the App to filter and display games when a bar is clicked
+
+#### C. Navigation Between Views
+
+Add a tabbed interface or view switcher:
+```typescript
+<Tabs defaultValue="overview">
+  <TabsList>
+    <TabsTrigger value="overview">Overview</TabsTrigger>
+    <TabsTrigger value="all-games">All Games</TabsTrigger>
+  </TabsList>
+  
+  <TabsContent value="overview">
+    {/* Existing histogram and statistics */}
+  </TabsContent>
+  
+  <TabsContent value="all-games">
+    <GameList games={results} ... />
+  </TabsContent>
+</Tabs>
+```
+
+Alternatively, use the existing dialog pattern but enhance it to show a list first, then drill down to individual games.
+
+### 4. Performance Considerations
+
+**Memory Management:**
+- Running 10,000 simulations with full game data could consume significant memory
+- Each `GameResult` contains arrays of rounds, votes, and actor states
+- Estimate: ~1-5KB per game result → 10,000 games = 10-50MB
+
+**Mitigation strategies:**
+1. **Pagination**: Load and display games in chunks (e.g., 100 at a time)
+2. **Lazy loading**: Store game parameters and only re-run specific games when user requests details
+3. **Progressive enhancement**: Offer "light mode" (just round counts) and "detailed mode" (full results)
+4. **Virtual scrolling**: Use react-virtual or similar for rendering large lists
+
+**Recommended approach for MVP:**
+- Store full results for simulations up to 1,000 games
+- For larger simulations (>1,000), show a warning and either:
+  - Limit storage to a random sample of games
+  - Only store summary data and allow re-running specific games on demand
+
+### 5. Backward Compatibility
+
+Ensure existing features continue to work:
+- Histogram visualization (extract round counts from GameResult[])
+- Statistics calculation (extract round counts from GameResult[])
+- Sample game display (use first game or random selection from results)
+
+## Implementation Steps
+
+### Phase 1: Core Data Structure (2-3 hours)
+1. Modify `runSimulation()` to return `GameResult[]`
+2. Update `calculateStatistics()` to handle new data structure
+3. Update App.tsx state and references
+4. Verify histogram still renders correctly
+5. Write unit tests for updated functions
+
+### Phase 2: Game List Component (3-4 hours)
+1. Create `GameList.tsx` component
+2. Implement basic table/list view with game info
+3. Add sorting functionality
+4. Add filtering by outcome
+5. Implement click handler to show game details
+6. Style according to existing design system
+
+### Phase 3: Integration (2-3 hours)
+1. Add tab/view switching UI in App.tsx
+2. Wire up GameList to open GameDetails dialog
+3. Test with various simulation sizes (10, 100, 1000 games)
+4. Handle edge cases (0 games, 1 game, etc.)
+
+### Phase 4: Enhancements (2-4 hours)
+1. Make histogram bars clickable to filter games
+2. Add game number to GameResult
+3. Implement search/filter UI
+4. Add pagination or virtual scrolling if needed
+5. Add loading states and progress indicators
+
+### Phase 5: Performance & Polish (2-3 hours)
+1. Implement memory management strategy
+2. Add warnings for large simulations
+3. Test performance with 10,000+ games
+4. Add tooltips and help text
+5. Update documentation
+
+### Phase 6: Testing & Documentation (1-2 hours)
+1. Write integration tests
+2. Test on mobile devices
+3. Update README with new feature
+4. Add inline code comments
+5. Create user documentation
+
+## User Experience Flow
+
+### Scenario 1: Small Simulation (< 100 games)
+1. User runs simulation with 50 iterations
+2. Results appear with histogram view (default)
+3. User clicks "All Games" tab
+4. Full list of 50 games appears in a table
+5. User clicks on "Game #23" 
+6. Dialog opens showing full round-by-round details for that game
+7. User closes dialog, still in "All Games" view
+8. User can select another game to inspect
+
+### Scenario 2: Large Simulation (> 1000 games)
+1. User runs simulation with 5,000 iterations
+2. Warning appears: "Storing full details for 5,000 games. This may use significant memory."
+3. User proceeds or reduces iteration count
+4. Results render in histogram
+5. User switches to "All Games" view
+6. Games appear in paginated table (100 per page)
+7. User can sort, filter, and navigate pages
+8. Clicking a game shows details
+
+### Scenario 3: Histogram Interaction
+1. User views histogram
+2. User clicks on bar showing "8 rounds"
+3. View switches to filtered game list showing only games with 8 rounds
+4. Header shows: "Games with 8 rounds (234 games)"
+5. User can view any of these specific games
+6. User can clear filter to see all games again
+
+## Design Specifications
+
+### Color Coding
+- Maintain existing color scheme from PRD.md
+- Loyalist outcomes: `oklch(0.65 0.15 240)` (Loyalist Blue)
+- Traitor outcomes: `oklch(0.60 0.20 25)` (Traitor Red)
+- Neutral/removed: `oklch(0.88 0.01 250)` (Neutral Gray)
+
+### Typography
+- Game numbers: JetBrains Mono (consistent with existing stats)
+- Headers: Space Grotesk (consistent with existing headers)
+- Round counts: JetBrains Mono Bold
+
+### Component States
+- Hoverable rows in game list (subtle background change)
+- Selected game highlight
+- Disabled state for games that can't be viewed (if applicable)
+
+## Edge Cases & Error Handling
+
+1. **No games run yet**: Show empty state with call-to-action
+2. **Single game**: Still show in list format for consistency
+3. **All games same outcome**: Handle filtering gracefully
+4. **Very long games (>100 rounds)**: Ensure GameDetails scrolls properly
+5. **Browser memory limits**: Detect and warn before storing huge datasets
+6. **Interrupted simulations**: Handle partial results gracefully
+
+## Testing Strategy
+
+### Unit Tests
+- `runSimulation()` returns correct GameResult[] structure
+- `calculateStatistics()` works with new data format
+- GameList sorting and filtering logic
+- Game selection handlers
+
+### Integration Tests
+- Full simulation flow from run to game detail view
+- Histogram → game list interaction
+- Filtering and search functionality
+- Tab switching with state preservation
+
+### Performance Tests
+- Measure memory usage for 1k, 5k, 10k games
+- Test render time for GameList with large datasets
+- Verify virtual scrolling/pagination performance
+
+### E2E Tests
+- User runs simulation and views multiple games
+- User filters games by outcome
+- User clicks histogram bar and sees filtered results
+- User sorts game list by different columns
+
+## Future Enhancements (Out of Scope)
+
+1. **Export functionality**: Download all game results as CSV/JSON
+2. **Comparison view**: Select multiple games to compare side-by-side
+3. **Game replay**: Animate the progression of a selected game
+4. **Advanced filtering**: Filter by specific actor removals, vote patterns, etc.
+5. **Persistence**: Save simulation results to browser storage or backend
+6. **Shareable links**: Generate URLs for specific simulation results
+7. **Statistical analysis**: Show distribution of outcomes, actor survival rates, etc.
+
+## Risk Assessment
+
+### Low Risk
+- UI component creation (using existing patterns)
+- Basic sorting and filtering
+- Integration with existing GameDetails component
+
+### Medium Risk  
+- Memory consumption with large simulations (mitigated by warnings/limits)
+- Performance of rendering large lists (mitigated by virtualization)
+- State management complexity (mitigated by keeping it simple)
+
+### High Risk
+- None identified for basic feature implementation
+
+## Success Criteria
+
+The feature will be considered successfully implemented when:
+
+1. ✅ Users can view a complete list of all games from a simulation
+2. ✅ Users can click any game to see its full round-by-round details
+3. ✅ The list supports sorting and basic filtering
+4. ✅ Performance remains acceptable for up to 1,000 game simulations
+5. ✅ Existing features (histogram, statistics, sample game) continue to work
+6. ✅ The UI follows the existing design system and patterns
+7. ✅ Unit tests cover new/modified functions
+8. ✅ No memory leaks or performance degradation
+
+## Estimated Effort
+
+- **Total time**: 12-19 hours
+- **Complexity**: Medium
+- **Dependencies**: None (all required components exist)
+- **Team size**: 1 developer
+- **Timeline**: 2-3 days for full implementation and testing
+
+## Open Questions
+
+1. Should we add pagination from the start, or only after testing with large datasets?
+   - **Recommendation**: Start simple, add pagination if needed during testing
+
+2. Should games be numbered sequentially (Game #1, #2, #3) or use UUIDs?
+   - **Recommendation**: Sequential numbers for better UX (easier to reference)
+
+3. Should we preserve the current "View Sample Game" button or replace it entirely?
+   - **Recommendation**: Keep it for quick access, but also add "All Games" view
+
+4. What's the maximum simulation size we should support with full game storage?
+   - **Recommendation**: 1,000 games with warning; 5,000 with user confirmation
+
+5. Should clicking a histogram bar navigate to filtered games or open a modal?
+   - **Recommendation**: Navigate to "All Games" tab with filter applied
