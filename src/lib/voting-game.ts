@@ -1,5 +1,6 @@
 export type ActorType = 'loyalist' | 'traitor';
 export type ActorStatus = 'active' | 'removed';
+export type GameType = 'random' | 'fixate';
 
 export interface Actor {
   id: number;
@@ -30,9 +31,12 @@ export class VotingGame {
   private actors: Actor[];
   private roundHistory: RoundResult[] = [];
   private currentRound = 0;
+  private gameType: GameType;
+  private loyalistSuspects: Map<number, number> = new Map(); // Maps loyalist ID to their suspect ID
 
-  constructor(loyalistCount: number, traitorCount: number) {
+  constructor(loyalistCount: number, traitorCount: number, gameType: GameType = 'random') {
     this.actors = [];
+    this.gameType = gameType;
     
     for (let i = 0; i < loyalistCount; i++) {
       this.actors.push({
@@ -67,25 +71,70 @@ export class VotingGame {
     return array[Math.floor(Math.random() * array.length)];
   }
 
+  private getSuspectForLoyalist(loyalistId: number): number {
+    const activeActors = this.getActiveActors();
+    const validTargets = activeActors.filter(a => a.id !== loyalistId);
+    
+    if (validTargets.length === 0) {
+      return -1;
+    }
+
+    // Check if loyalist has an existing suspect
+    const currentSuspect = this.loyalistSuspects.get(loyalistId);
+    
+    // If suspect exists and is still active, keep them
+    if (currentSuspect !== undefined) {
+      const suspectStillActive = activeActors.some(a => a.id === currentSuspect);
+      if (suspectStillActive) {
+        return currentSuspect;
+      }
+    }
+    
+    // Otherwise, select a new random suspect
+    const newSuspect = this.randomChoice(validTargets);
+    this.loyalistSuspects.set(loyalistId, newSuspect.id);
+    return newSuspect.id;
+  }
+
   private conductVote(eligibleTargets?: Actor[]): Map<number, number> {
     const votes = new Map<number, number>();
     const activeActors = this.getActiveActors();
     const targets = eligibleTargets || activeActors;
 
     for (const actor of activeActors) {
-      let validTargets: Actor[];
+      let targetId: number;
 
       if (eligibleTargets) {
-        validTargets = eligibleTargets;
+        // In tie-breaking scenarios, vote randomly from eligible targets
+        const target = this.randomChoice(eligibleTargets);
+        targetId = target.id;
       } else if (actor.type === 'loyalist') {
-        validTargets = activeActors.filter(a => a.id !== actor.id);
+        // Loyalist voting strategy depends on game type
+        if (this.gameType === 'fixate') {
+          targetId = this.getSuspectForLoyalist(actor.id);
+        } else {
+          // Random strategy
+          const validTargets = activeActors.filter(a => a.id !== actor.id);
+          if (validTargets.length > 0) {
+            const target = this.randomChoice(validTargets);
+            targetId = target.id;
+          } else {
+            continue;
+          }
+        }
       } else {
-        validTargets = this.getActiveLoyalists();
+        // Traitor strategy (unchanged): vote for loyalists
+        const validTargets = this.getActiveLoyalists();
+        if (validTargets.length > 0) {
+          const target = this.randomChoice(validTargets);
+          targetId = target.id;
+        } else {
+          continue;
+        }
       }
 
-      if (validTargets.length > 0) {
-        const target = this.randomChoice(validTargets);
-        votes.set(target.id, (votes.get(target.id) || 0) + 1);
+      if (targetId !== -1) {
+        votes.set(targetId, (votes.get(targetId) || 0) + 1);
       }
     }
 
@@ -199,11 +248,11 @@ export interface SimulationResult {
   outcome: 'traitor_removed' | 'no_loyalists';
 }
 
-export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number): SimulationResult[] {
+export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number, gameType: GameType = 'random'): SimulationResult[] {
   const results: SimulationResult[] = [];
   
   for (let i = 0; i < iterations; i++) {
-    const game = new VotingGame(loyalistCount, traitorCount);
+    const game = new VotingGame(loyalistCount, traitorCount, gameType);
     const result = game.run();
     results.push({
       rounds: result.totalRounds,
