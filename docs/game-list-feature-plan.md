@@ -68,7 +68,7 @@ export function runSimulation(
 Consider adding a unique ID to each game for easier tracking:
 ```typescript
 export interface GameResult {
-  id?: string; // Optional UUID or simple counter
+  id?: string; // Optional: UUID (using existing uuid package) or simple counter
   rounds: RoundResult[];
   totalRounds: number;
   outcome: 'traitor_removed' | 'no_loyalists';
@@ -124,9 +124,7 @@ interface GameListProps {
 - Click on any game to view full details
 
 **Design considerations:**
-- Use a `Table` component from shadcn/ui for structured data display
-- Use `Badge` components to show outcomes (matching existing style)
-- Use `ScrollArea` for handling large numbers of games
+- Use `Table`, `Badge`, and `ScrollArea` components from shadcn/ui (already available in `src/components/ui/`) for structured, scrollable data display
 - **Implement pagination from the start** to handle large datasets (10,000+ games) without performance issues
 - Consider 100-200 games per page as a starting point, with user-configurable options
 - Modern browsers can efficiently render larger tables with proper virtualization
@@ -149,7 +147,7 @@ Modify `GameDetails.tsx` to show detailed voting information for Phase 1:
       .map(([actorId, voteCount]) => (
         <div key={actorId} className="flex items-center justify-between">
           {getActorBadge(actorId)}
-          <span className="text-sm font-mono">
+          <span className="text-sm" style={{ fontFamily: 'var(--font-mono)' }}>
             {voteCount} vote{voteCount !== 1 ? 's' : ''}
           </span>
         </div>
@@ -275,14 +273,14 @@ Ensure existing features continue to work:
 
 ## Implementation Steps
 
-### Phase 1: Core Data Structure (2-3 hours)
+### Phase 1: Core Data Structure
 1. Modify `runSimulation()` to return `GameResult[]`
 2. Update `calculateStatistics()` to handle new data structure
 3. Update App.tsx state and references
 4. Verify histogram still renders correctly
 5. Write unit tests for updated functions
 
-### Phase 2: Game List Component (3-4 hours)
+### Phase 2: Game List Component
 1. Create `GameList.tsx` component
 2. Implement basic table/list view with game info
 3. Add sorting functionality
@@ -290,7 +288,7 @@ Ensure existing features continue to work:
 5. Implement click handler to show game details
 6. Style according to existing design system
 
-### Phase 3: Vote Visibility Enhancement (2-3 hours)
+### Phase 3: Vote Visibility Enhancement
 1. **Enhance `GameDetails.tsx` to display all votes**
 2. Add vote breakdown section showing all actors who received votes
 3. Display vote counts in descending order
@@ -298,27 +296,27 @@ Ensure existing features continue to work:
 5. Add optional collapse/expand for detailed vote views
 6. Test with various voting scenarios (ties, unanimous votes, close calls)
 
-### Phase 4: Integration (2-3 hours)
+### Phase 4: Integration
 1. Add tab/view switching UI in App.tsx
 2. Wire up GameList to open enhanced GameDetails dialog
 3. Test with various simulation sizes (10, 100, 1000 games)
 4. Handle edge cases (0 games, 1 game, etc.)
 
-### Phase 5: Enhancements (2-4 hours)
+### Phase 5: Enhancements
 1. Make histogram bars clickable to filter games
 2. Add game number to GameResult
 3. Implement search/filter UI
 4. Add pagination or virtual scrolling if needed
 5. Add loading states and progress indicators
 
-### Phase 6: Performance & Polish (2-3 hours)
+### Phase 6: Performance & Polish
 1. Implement memory management strategy
 2. Add warnings for large simulations
 3. Test performance with 10,000+ games
 4. Add tooltips and help text
 5. Update documentation
 
-### Phase 7: Testing & Documentation (1-2 hours)
+### Phase 7: Testing & Documentation
 1. Write integration tests
 2. Test on mobile devices
 3. Update README with new feature
@@ -450,14 +448,6 @@ The feature will be considered successfully implemented when:
 7. ✅ The UI follows the existing design system and patterns
 8. ✅ Unit tests cover new/modified functions
 9. ✅ No memory leaks or performance degradation
-
-## Estimated Effort
-
-- **Total time**: 14-22 hours (updated to include vote visibility enhancement)
-- **Complexity**: Medium
-- **Dependencies**: None (all required components exist)
-- **Team size**: 1 developer
-- **Timeline**: 2-3 days for full implementation and testing
 
 ## Open Questions
 
