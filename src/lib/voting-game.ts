@@ -83,9 +83,9 @@ export class VotingGame {
     // Check if loyalist has an existing suspect
     const currentSuspect = this.loyalistSuspects.get(loyalistId);
     
-    // If suspect exists and is still active, keep them
+    // If suspect exists and is still in valid targets, keep them
     if (currentSuspect !== undefined) {
-      const suspectStillActive = activeActors.some(a => a.id === currentSuspect);
+      const suspectStillActive = validTargets.some(a => a.id === currentSuspect);
       if (suspectStillActive) {
         return currentSuspect;
       }
