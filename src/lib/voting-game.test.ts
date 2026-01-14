@@ -193,10 +193,11 @@ describe('runSimulation', () => {
   it('should return array of round counts', () => {
     const results = runSimulation(5, 4, 1)
     
-    results.forEach(rounds => {
-      expect(typeof rounds).toBe('number')
-      expect(rounds).toBeGreaterThan(0)
-      expect(Number.isInteger(rounds)).toBe(true)
+    results.forEach(result => {
+      expect(typeof result.rounds).toBe('number')
+      expect(result.rounds).toBeGreaterThan(0)
+      expect(Number.isInteger(result.rounds)).toBe(true)
+      expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
     })
   })
 
@@ -204,7 +205,7 @@ describe('runSimulation', () => {
     const results = runSimulation(100, 5, 2)
     
     // With randomness, we should get at least some variation
-    const uniqueResults = new Set(results)
+    const uniqueResults = new Set(results.map(r => r.rounds))
     
     // Should have at least 2 different outcomes in 100 runs
     // Using more iterations to ensure statistical significance
@@ -215,67 +216,69 @@ describe('runSimulation', () => {
     const results = runSimulation(1, 3, 1)
     
     expect(results.length).toBe(1)
-    expect(results[0]).toBeGreaterThan(0)
+    expect(results[0].rounds).toBeGreaterThan(0)
+    expect(['traitor_removed', 'no_loyalists']).toContain(results[0].outcome)
   })
 
   it('should handle many iterations', () => {
     const results = runSimulation(100, 5, 2)
     
     expect(results.length).toBe(100)
-    results.forEach(rounds => {
-      expect(rounds).toBeGreaterThan(0)
+    results.forEach(result => {
+      expect(result.rounds).toBeGreaterThan(0)
+      expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
     })
   })
 })
 
 describe('calculateStatistics', () => {
   it('should calculate correct mean', () => {
-    const rounds = [2, 4, 6, 8, 10]
-    const stats = calculateStatistics(rounds)
+    const results = [2, 4, 6, 8, 10].map(rounds => ({ rounds, outcome: 'traitor_removed' as const }))
+    const stats = calculateStatistics(results)
     
     expect(stats.mean).toBe(6)
   })
 
   it('should calculate correct median for odd-length array', () => {
-    const rounds = [1, 3, 5, 7, 9]
-    const stats = calculateStatistics(rounds)
+    const results = [1, 3, 5, 7, 9].map(rounds => ({ rounds, outcome: 'traitor_removed' as const }))
+    const stats = calculateStatistics(results)
     
     expect(stats.median).toBe(5)
   })
 
   it('should calculate correct median for even-length array', () => {
-    const rounds = [2, 4, 6, 8]
-    const stats = calculateStatistics(rounds)
+    const results = [2, 4, 6, 8].map(rounds => ({ rounds, outcome: 'traitor_removed' as const }))
+    const stats = calculateStatistics(results)
     
     expect(stats.median).toBe(5)
   })
 
   it('should calculate correct mode', () => {
-    const rounds = [2, 3, 3, 3, 4, 5]
-    const stats = calculateStatistics(rounds)
+    const results = [2, 3, 3, 3, 4, 5].map(rounds => ({ rounds, outcome: 'traitor_removed' as const }))
+    const stats = calculateStatistics(results)
     
     expect(stats.mode).toBe(3)
   })
 
   it('should calculate correct min and max', () => {
-    const rounds = [3, 1, 4, 1, 5, 9, 2, 6]
-    const stats = calculateStatistics(rounds)
+    const results = [3, 1, 4, 1, 5, 9, 2, 6].map(rounds => ({ rounds, outcome: 'traitor_removed' as const }))
+    const stats = calculateStatistics(results)
     
     expect(stats.min).toBe(1)
     expect(stats.max).toBe(9)
   })
 
   it('should calculate standard deviation', () => {
-    const rounds = [2, 4, 4, 4, 5, 5, 7, 9]
-    const stats = calculateStatistics(rounds)
+    const results = [2, 4, 4, 4, 5, 5, 7, 9].map(rounds => ({ rounds, outcome: 'traitor_removed' as const }))
+    const stats = calculateStatistics(results)
     
     expect(stats.stdDev).toBeGreaterThan(0)
     expect(typeof stats.stdDev).toBe('number')
   })
 
   it('should handle empty array', () => {
-    const rounds: number[] = []
-    const stats = calculateStatistics(rounds)
+    const results: Array<{ rounds: number; outcome: 'traitor_removed' | 'no_loyalists' }> = []
+    const stats = calculateStatistics(results)
     
     expect(stats.mean).toBe(0)
     expect(stats.median).toBe(0)
@@ -286,8 +289,8 @@ describe('calculateStatistics', () => {
   })
 
   it('should handle single value', () => {
-    const rounds = [5]
-    const stats = calculateStatistics(rounds)
+    const results = [{ rounds: 5, outcome: 'traitor_removed' as const }]
+    const stats = calculateStatistics(results)
     
     expect(stats.mean).toBe(5)
     expect(stats.median).toBe(5)
@@ -298,8 +301,8 @@ describe('calculateStatistics', () => {
   })
 
   it('should handle all same values', () => {
-    const rounds = [3, 3, 3, 3, 3]
-    const stats = calculateStatistics(rounds)
+    const results = [3, 3, 3, 3, 3].map(rounds => ({ rounds, outcome: 'traitor_removed' as const }))
+    const stats = calculateStatistics(results)
     
     expect(stats.mean).toBe(3)
     expect(stats.median).toBe(3)
