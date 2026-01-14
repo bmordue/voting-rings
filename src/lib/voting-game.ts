@@ -212,6 +212,9 @@ export function runSimulation(iterations: number, loyalistCount: number, traitor
 
 // Influence-based voting game
 export class InfluenceVotingGame {
+  private static readonly MAX_INFLUENCE_SCORE = 100;
+  private static readonly MIN_INFLUENCE_SCORE = 1;
+  
   private actors: Actor[];
   private roundHistory: RoundResult[] = [];
   private currentRound = 0;
@@ -236,12 +239,13 @@ export class InfluenceVotingGame {
       });
     }
 
-    // Initialize influence scores randomly (1-100)
+    // Initialize influence scores randomly (MIN_INFLUENCE_SCORE to MAX_INFLUENCE_SCORE)
     for (const actor of this.actors) {
       for (const target of this.actors) {
         if (actor.id !== target.id) {
           const key = `${actor.id}-${target.id}`;
-          this.influenceScores.set(key, Math.floor(Math.random() * 100) + 1);
+          const range = InfluenceVotingGame.MAX_INFLUENCE_SCORE - InfluenceVotingGame.MIN_INFLUENCE_SCORE + 1;
+          this.influenceScores.set(key, Math.floor(Math.random() * range) + InfluenceVotingGame.MIN_INFLUENCE_SCORE);
         }
       }
     }
