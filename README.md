@@ -7,6 +7,24 @@ This template is your blank canvas. It comes with a minimal setup to help you ge
 - A clean, minimal Spark environment
 - Pre-configured for local development
 - Ready to scale with your ideas
+- Comprehensive unit tests with 99%+ coverage on core logic
+- GitHub Actions for automated testing and coverage reporting
+
+## Testing
+
+This project includes comprehensive unit tests for the core business logic. See [TESTING.md](TESTING.md) for full documentation.
+
+**Quick Start:**
+```bash
+npm test           # Run tests in watch mode
+npm run test:run   # Run tests once
+npm run coverage   # Generate coverage report
+```
+
+The test suite includes:
+- 38 unit tests across core modules
+- 99%+ coverage on business logic (`src/lib`)
+- Automated CI/CD with GitHub Actions
   
 🧠 What Can You Do?
 
