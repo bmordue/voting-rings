@@ -131,14 +131,59 @@ interface GameListProps {
 - Consider 100-200 games per page as a starting point, with user-configurable options
 - Modern browsers can efficiently render larger tables with proper virtualization
 
-#### B. Enhanced Histogram Interaction
+#### B. Enhanced GameDetails Component - Vote Visibility
+
+**Current State:**
+The existing `GameDetails.tsx` component shows which actors were removed in each round but does NOT display the actual vote counts from `phaseOneVotes: Map<number, number>`.
+
+**Enhancement Required:**
+Modify `GameDetails.tsx` to show detailed voting information for Phase 1:
+
+```typescript
+// In each round card, add vote breakdown section
+<div>
+  <div className="text-sm font-medium mb-2 text-muted-foreground">Phase 1: Vote Results</div>
+  <div className="space-y-1">
+    {Array.from(round.phaseOneVotes.entries())
+      .sort((a, b) => b[1] - a[1]) // Sort by vote count descending
+      .map(([actorId, voteCount]) => (
+        <div key={actorId} className="flex items-center justify-between">
+          {getActorBadge(actorId)}
+          <span className="text-sm font-mono">
+            {voteCount} vote{voteCount !== 1 ? 's' : ''}
+          </span>
+        </div>
+      ))}
+  </div>
+  <div className="flex items-center gap-2 mt-2">
+    <span className="text-sm font-semibold">Removed:</span>
+    {getActorBadge(round.phaseOneRemoved)}
+  </div>
+</div>
+```
+
+**Features:**
+- Display all actors who received votes, sorted by vote count (highest first)
+- Show exact vote counts for each actor
+- Highlight the actor who was removed
+- Use consistent styling with existing badges
+- Consider showing vote percentages alongside raw counts
+- Optionally collapse/expand vote details for rounds with many voters
+
+**Benefits:**
+- Full transparency into voting mechanics
+- Users can understand tie situations and close votes
+- Helps identify voting patterns and strategic behavior
+- Essential for analyzing traitor detection strategies
+
+#### C. Enhanced Histogram Interaction
 
 Modify `Histogram.tsx` to make it interactive:
 - When user clicks on a bar, show all games with that specific round count
 - Add a callback prop: `onBarClick?: (roundCount: number) => void`
 - Update the App to filter and display games when a bar is clicked
 
-#### C. Navigation Between Views
+#### D. Navigation Between Views
 
 Add a tabbed interface or view switcher:
 ```typescript
@@ -179,7 +224,47 @@ Alternatively, use the existing dialog pattern but enhance it to show a list fir
   - Limit storage to a random sample of games
   - Only store summary data and allow re-running specific games on demand
 
-### 5. Backward Compatibility
+### 5. Data Persistence - Do We Need a Database?
+
+**Short Answer: No, not for the initial implementation.**
+
+**Analysis:**
+
+**Current Approach - In-Memory Storage (Recommended for MVP):**
+- Store simulation results in React component state
+- Pros:
+  - Simple implementation with no additional infrastructure
+  - Fast read/write access
+  - No server-side dependencies
+  - Sufficient for typical usage patterns (running simulations and analyzing results in same session)
+  - 10-50MB of data fits comfortably in browser memory
+- Cons:
+  - Results lost on page refresh
+  - Cannot share results between users or sessions
+  - Limited to browser memory constraints
+
+**When You WOULD Need a Database:**
+- **Persistence across sessions**: Users want to save simulation results and return to them later
+- **Sharing results**: Users want to share specific simulation runs with others via links
+- **Historical analysis**: Users want to compare results across multiple simulation sessions over time
+- **Collaboration**: Multiple users analyzing the same simulation data
+- **Very large datasets**: Simulations exceeding browser memory limits (100k+ games)
+
+**Alternative: Browser Storage (Middle Ground):**
+Before implementing a full database, consider browser storage options:
+- **localStorage**: Store recent simulations (5MB limit, synchronous)
+- **IndexedDB**: Store larger datasets in browser (asyncronous, more complex)
+- Pros: Persistence without server infrastructure
+- Cons: Still limited to single user/browser, storage limits vary by browser
+
+**Recommendation:**
+1. **Phase 1 (this implementation)**: Use in-memory React state only
+2. **Phase 2 (if users request it)**: Add localStorage/IndexedDB for session persistence
+3. **Phase 3 (if scaling needed)**: Implement backend database with API
+
+This incremental approach validates user needs before investing in database infrastructure.
+
+### 6. Backward Compatibility
 
 Ensure existing features continue to work:
 - Histogram visualization (extract round counts from GameResult[])
@@ -203,27 +288,35 @@ Ensure existing features continue to work:
 5. Implement click handler to show game details
 6. Style according to existing design system
 
-### Phase 3: Integration (2-3 hours)
+### Phase 3: Vote Visibility Enhancement (2-3 hours)
+1. **Enhance `GameDetails.tsx` to display all votes**
+2. Add vote breakdown section showing all actors who received votes
+3. Display vote counts in descending order
+4. Highlight the removed actor
+5. Add optional collapse/expand for detailed vote views
+6. Test with various voting scenarios (ties, unanimous votes, close calls)
+
+### Phase 4: Integration (2-3 hours)
 1. Add tab/view switching UI in App.tsx
-2. Wire up GameList to open GameDetails dialog
+2. Wire up GameList to open enhanced GameDetails dialog
 3. Test with various simulation sizes (10, 100, 1000 games)
 4. Handle edge cases (0 games, 1 game, etc.)
 
-### Phase 4: Enhancements (2-4 hours)
+### Phase 5: Enhancements (2-4 hours)
 1. Make histogram bars clickable to filter games
 2. Add game number to GameResult
 3. Implement search/filter UI
 4. Add pagination or virtual scrolling if needed
 5. Add loading states and progress indicators
 
-### Phase 5: Performance & Polish (2-3 hours)
+### Phase 6: Performance & Polish (2-3 hours)
 1. Implement memory management strategy
 2. Add warnings for large simulations
 3. Test performance with 10,000+ games
 4. Add tooltips and help text
 5. Update documentation
 
-### Phase 6: Testing & Documentation (1-2 hours)
+### Phase 7: Testing & Documentation (1-2 hours)
 1. Write integration tests
 2. Test on mobile devices
 3. Update README with new feature
@@ -348,16 +441,17 @@ The feature will be considered successfully implemented when:
 
 1. ✅ Users can view a complete list of all games from a simulation
 2. ✅ Users can click any game to see its full round-by-round details
-3. ✅ The list supports sorting and basic filtering
-4. ✅ Performance remains acceptable for up to 1,000 game simulations
-5. ✅ Existing features (histogram, statistics, sample game) continue to work
-6. ✅ The UI follows the existing design system and patterns
-7. ✅ Unit tests cover new/modified functions
-8. ✅ No memory leaks or performance degradation
+3. ✅ **All votes are visible** - Users can see detailed vote counts for every actor in each round
+4. ✅ The list supports sorting and basic filtering
+5. ✅ Performance remains acceptable for up to 1,000 game simulations
+6. ✅ Existing features (histogram, statistics, sample game) continue to work
+7. ✅ The UI follows the existing design system and patterns
+8. ✅ Unit tests cover new/modified functions
+9. ✅ No memory leaks or performance degradation
 
 ## Estimated Effort
 
-- **Total time**: 12-19 hours
+- **Total time**: 14-22 hours (updated to include vote visibility enhancement)
 - **Complexity**: Medium
 - **Dependencies**: None (all required components exist)
 - **Team size**: 1 developer
