@@ -196,7 +196,7 @@ export class VotingGame {
         break;
       }
       
-      // Check if all loyalists are gone (applies to both modes)
+      // Check if one side has been completely eliminated (applies to both modes)
       if (this.isGameOver()) {
         this.roundHistory.push({
           roundNumber: this.currentRound,
