@@ -253,7 +253,7 @@ Alternatively, use the existing dialog pattern but enhance it to show a list fir
 **Alternative: Browser Storage (Middle Ground):**
 Before implementing a full database, consider browser storage options:
 - **localStorage**: Store recent simulations (5MB limit, synchronous)
-- **IndexedDB**: Store larger datasets in browser (asyncronous, more complex)
+- **IndexedDB**: Store larger datasets in browser (asynchronous, more complex)
 - Pros: Persistence without server infrastructure
 - Cons: Still limited to single user/browser, storage limits vary by browser
 
