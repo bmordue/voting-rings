@@ -102,7 +102,7 @@ export class VotingGame {
     const targets = eligibleTargets || activeActors;
 
     for (const actor of activeActors) {
-      let targetId: number;
+      let targetId: number | undefined;
 
       if (eligibleTargets) {
         // In tie-breaking scenarios, vote randomly from eligible targets
@@ -111,16 +111,19 @@ export class VotingGame {
       } else if (actor.type === 'loyalist') {
         // Loyalist voting strategy depends on game type
         if (this.gameType === 'fixate') {
-          targetId = this.getSuspectForLoyalist(actor.id);
+          const suspectId = this.getSuspectForLoyalist(actor.id);
+          if (suspectId !== -1) {
+            targetId = suspectId;
+          }
+          // If no valid suspect, skip this vote (continue)
         } else {
           // Random strategy
           const validTargets = activeActors.filter(a => a.id !== actor.id);
           if (validTargets.length > 0) {
             const target = this.randomChoice(validTargets);
             targetId = target.id;
-          } else {
-            continue;
           }
+          // If no valid targets, skip this vote (continue)
         }
       } else {
         // Traitor strategy (unchanged): vote for loyalists
@@ -128,12 +131,11 @@ export class VotingGame {
         if (validTargets.length > 0) {
           const target = this.randomChoice(validTargets);
           targetId = target.id;
-        } else {
-          continue;
         }
+        // If no valid targets, skip this vote (continue)
       }
 
-      if (targetId !== -1) {
+      if (targetId !== undefined) {
         votes.set(targetId, (votes.get(targetId) || 0) + 1);
       }
     }
