@@ -39,18 +39,12 @@ export function GameDetails({ game, initialLoyalists, initialTraitors }: GameDet
           <Card className="p-4">
             <div className="text-sm text-muted-foreground">Outcome</div>
             <div className="text-lg font-semibold mt-1">
-              {game.outcome === 'traitor_removed' && (
-                <span className="text-loyalist">First Traitor Removed</span>
-              )}
-              {game.outcome === 'all_loyalists' && (
-                <span className="text-loyalist">All Loyalists Remaining</span>
-              )}
-              {game.outcome === 'no_loyalists' && (
-                <span className="text-traitor">No Loyalists Left</span>
-              )}
-              {game.outcome === 'all_traitors' && (
-                <span className="text-traitor">All Traitors Remaining</span>
-              )}
+              {{
+                'traitor_removed': <span className="text-loyalist">First Traitor Removed</span>,
+                'all_loyalists': <span className="text-loyalist">All Loyalists Remaining</span>,
+                'no_loyalists': <span className="text-traitor">No Loyalists Left</span>,
+                'all_traitors': <span className="text-traitor">All Traitors Remaining</span>
+              }[game.outcome]}
             </div>
           </Card>
         </div>
