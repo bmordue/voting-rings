@@ -90,6 +90,7 @@ const [results, setResults] = useState<GameResult[]>([]);
 The `calculateStatistics()` function currently accepts `number[]`. To maintain backward compatibility and keep the function focused on its single responsibility:
 - Call it with `results.map(r => r.totalRounds)` when needed
 - This approach avoids breaking changes and keeps statistics calculation separate from data structure concerns
+- **Future enhancement**: Consider overloading the function to accept both `number[]` and `GameResult[]` with appropriate type guards to eliminate the mapping operation
 
 ### 3. UI Components
 
@@ -127,7 +128,8 @@ interface GameListProps {
 - Use `Badge` components to show outcomes (matching existing style)
 - Use `ScrollArea` for handling large numbers of games
 - **Implement pagination from the start** to handle large datasets (10,000+ games) without performance issues
-- Consider 50-100 games per page as a starting point
+- Consider 100-200 games per page as a starting point, with user-configurable options
+- Modern browsers can efficiently render larger tables with proper virtualization
 
 #### B. Enhanced Histogram Interaction
 
@@ -268,8 +270,8 @@ Ensure existing features continue to work:
 - These colors represent actor types, not outcome types
 
 ### Typography
-- Game numbers: `var(--font-mono)` (JetBrains Mono)
-- Headers: `var(--font-heading)` (Space Grotesk)
+- Game numbers: `var(--font-mono)` (JetBrains Mono - defined in `src/index.css`)
+- Headers: `var(--font-heading)` (Space Grotesk - defined in `src/index.css`)
 - Round counts: `var(--font-mono)` with bold weight
 - Use CSS custom properties consistent with existing codebase
 
@@ -314,13 +316,16 @@ Ensure existing features continue to work:
 
 ## Future Enhancements (Out of Scope)
 
-1. **Export functionality**: Download all game results as CSV/JSON
-2. **Comparison view**: Select multiple games to compare side-by-side
-3. **Game replay**: Animate the progression of a selected game
-4. **Advanced filtering**: Filter by specific actor removals, vote patterns, etc.
-5. **Persistence**: Save simulation results to browser storage or backend
+*Priority items for consideration in follow-up iterations:*
+
+1. **Export functionality** ⭐ (High Priority): Download all game results as CSV/JSON - commonly expected in data analysis tools
+2. **Persistence** ⭐ (High Priority): Save simulation results to browser storage or backend for later access
+3. **Comparison view**: Select multiple games to compare side-by-side
+4. **Game replay**: Animate the progression of a selected game
+5. **Advanced filtering**: Filter by specific actor removals, vote patterns, etc.
 6. **Shareable links**: Generate URLs for specific simulation results
 7. **Statistical analysis**: Show distribution of outcomes, actor survival rates, etc.
+8. **Memory-based thresholds**: Instead of fixed game count limits, use estimated memory usage that adapts to device capabilities
 
 ## Risk Assessment
 
