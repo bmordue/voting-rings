@@ -219,10 +219,12 @@ Alternatively, use the existing dialog pattern but enhance it to show a list fir
 4. **Virtual scrolling**: Use react-virtual or similar for rendering large lists
 
 **Recommended approach for MVP:**
-- Store full results for simulations up to 1,000 games
-- For larger simulations (>1,000), show a warning and either:
-  - Limit storage to a random sample of games
-  - Only store summary data and allow re-running specific games on demand
+- Base the storage limit on an estimated memory budget rather than a fixed game count
+  - Estimate memory as: `estimatedBytes = gameCount * avgBytesPerGame`
+  - With the current 1–5KB/game estimate, storing full results for up to 10,000 games (~10–50MB) should be acceptable and aligns with the existing UI limit (`max={10000}` in `App.tsx`)
+- When the estimated memory usage would exceed the chosen budget (e.g., ~50MB), show a warning and either:
+  - Limit storage to a random sample of games while still computing aggregate statistics for all iterations
+  - Only store summary data (e.g., round counts) and allow re-running specific games on demand when the user drills into them
 
 ### 5. Data Persistence - Do We Need a Database?
 
