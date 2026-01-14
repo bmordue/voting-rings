@@ -93,7 +93,7 @@ export function Histogram({ data, width = 800, height = 400 }: HistogramProps) {
 
     // Helper function to create tooltip content
     const createTooltipHtml = (d: HistDataPoint) => {
-      return `<strong>${d.rounds} rounds</strong><br/>Loyalist wins: ${d.loyalistWins} (${((d.loyalistWins / data.length) * 100).toFixed(1)}%)<br/>Traitor wins: ${d.traitorWins} (${((d.traitorWins / data.length) * 100).toFixed(1)}%)`;
+      return `<strong>${d.rounds} rounds</strong><br/>Loyalist wins: ${d.loyalistWins} (${((d.loyalistWins / d.total) * 100).toFixed(1)}%)<br/>Traitor wins: ${d.traitorWins} (${((d.traitorWins / d.total) * 100).toFixed(1)}%)<br/>Total: ${d.total} games`;
     };
 
     // Create loyalist win bars (bottom of stack)
