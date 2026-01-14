@@ -150,10 +150,11 @@ export class VotingGame {
     const activeTraitors = this.getActiveTraitors();
     const activeLoyalists = this.getActiveLoyalists();
     
-    // Both conditions end when all actors are of one type
-    // The difference is WHEN this is checked (see run() method):
-    // - 'first_traitor_removed' checks after phase 1
-    // - 'all_one_type' only checks after both phases complete
+    // This helper only checks whether one side has been completely eliminated.
+    // Usage by end condition (see run() method):
+    // - 'all_one_type': this directly represents the terminal condition
+    // - 'first_traitor_removed': this is used only to detect "no loyalists remain";
+    //   the fact that the game ends when any traitor is removed is handled elsewhere
     return activeTraitors.length === 0 || activeLoyalists.length === 0;
   }
 
@@ -162,7 +163,10 @@ export class VotingGame {
     const activeLoyalists = this.getActiveLoyalists();
     
     if (this.endCondition === 'first_traitor_removed') {
-      return activeTraitors.length === 0 ? 'traitor_removed' : 'no_loyalists';
+      // In 'first_traitor_removed' mode, the game ends either because
+      // all loyalists have been removed or because at least one traitor
+      // has been removed while some loyalists remain.
+      return activeLoyalists.length === 0 ? 'no_loyalists' : 'traitor_removed';
     } else {
       // 'all_one_type'
       if (activeTraitors.length === 0) {
@@ -179,8 +183,21 @@ export class VotingGame {
 
       const phaseOne = this.resolvePhaseOne();
       
-      // For 'first_traitor_removed', check if game is over after phase 1
-      if (this.endCondition === 'first_traitor_removed' && this.isGameOver()) {
+      // For 'first_traitor_removed', check if a traitor was just removed
+      const removedActor = this.actors.find(a => a.id === phaseOne.removedId);
+      if (this.endCondition === 'first_traitor_removed' && removedActor?.type === 'traitor') {
+        this.roundHistory.push({
+          roundNumber: this.currentRound,
+          phaseOneVotes: phaseOne.votes,
+          phaseOneRemoved: phaseOne.removedId,
+          phaseTwoRemoved: -1,
+          remainingActors: this.getActiveActors().map(a => ({ ...a }))
+        });
+        break;
+      }
+      
+      // Check if all loyalists are gone (applies to both modes)
+      if (this.isGameOver()) {
         this.roundHistory.push({
           roundNumber: this.currentRound,
           phaseOneVotes: phaseOne.votes,

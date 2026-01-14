@@ -165,7 +165,7 @@ function App() {
               <div className="space-y-2">
                 <Label htmlFor="endCondition">End Condition</Label>
                 <Select value={endCondition} onValueChange={(value) => setEndCondition(value as EndCondition)}>
-                  <SelectTrigger id="endCondition">
+                  <SelectTrigger id="endCondition" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
