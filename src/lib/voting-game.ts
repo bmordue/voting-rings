@@ -150,12 +150,11 @@ export class VotingGame {
     const activeTraitors = this.getActiveTraitors();
     const activeLoyalists = this.getActiveLoyalists();
     
-    if (this.endCondition === 'first_traitor_removed') {
-      return activeTraitors.length === 0 || activeLoyalists.length === 0;
-    } else {
-      // 'all_one_type': only end when all remaining actors are of the same type
-      return activeTraitors.length === 0 || activeLoyalists.length === 0;
-    }
+    // Both conditions end when all actors are of one type
+    // The difference is WHEN this is checked (see run() method):
+    // - 'first_traitor_removed' checks after phase 1
+    // - 'all_one_type' only checks after both phases complete
+    return activeTraitors.length === 0 || activeLoyalists.length === 0;
   }
 
   private getOutcome(): 'traitor_removed' | 'no_loyalists' | 'all_loyalists' | 'all_traitors' {
