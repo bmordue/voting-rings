@@ -87,9 +87,9 @@ const [results, setResults] = useState<GameResult[]>([]);
 ```
 
 **Update statistics calculation:**
-The `calculateStatistics()` function currently accepts `number[]`. Either:
-- Modify it to accept `GameResult[]` and extract round counts internally
+The `calculateStatistics()` function currently accepts `number[]`. To maintain backward compatibility and keep the function focused on its single responsibility:
 - Call it with `results.map(r => r.totalRounds)` when needed
+- This approach avoids breaking changes and keeps statistics calculation separate from data structure concerns
 
 ### 3. UI Components
 
@@ -126,7 +126,8 @@ interface GameListProps {
 - Use a `Table` component from shadcn/ui for structured data display
 - Use `Badge` components to show outcomes (matching existing style)
 - Use `ScrollArea` for handling large numbers of games
-- Implement virtualization if dealing with >1000 games for performance
+- **Implement pagination from the start** to handle large datasets (10,000+ games) without performance issues
+- Consider 50-100 games per page as a starting point
 
 #### B. Enhanced Histogram Interaction
 
@@ -261,14 +262,16 @@ Ensure existing features continue to work:
 
 ### Color Coding
 - Maintain existing color scheme from PRD.md
-- Loyalist outcomes: `oklch(0.65 0.15 240)` (Loyalist Blue)
-- Traitor outcomes: `oklch(0.60 0.20 25)` (Traitor Red)
-- Neutral/removed: `oklch(0.88 0.01 250)` (Neutral Gray)
+- Loyalist actors: `oklch(0.65 0.15 240)` (Loyalist Blue)
+- Traitor actors: `oklch(0.60 0.20 25)` (Traitor Red)
+- Neutral/removed actors: `oklch(0.88 0.01 250)` (Neutral Gray)
+- These colors represent actor types, not outcome types
 
 ### Typography
-- Game numbers: JetBrains Mono (consistent with existing stats)
-- Headers: Space Grotesk (consistent with existing headers)
-- Round counts: JetBrains Mono Bold
+- Game numbers: `var(--font-mono)` (JetBrains Mono)
+- Headers: `var(--font-heading)` (Space Grotesk)
+- Round counts: `var(--font-mono)` with bold weight
+- Use CSS custom properties consistent with existing codebase
 
 ### Component States
 - Hoverable rows in game list (subtle background change)
@@ -357,17 +360,17 @@ The feature will be considered successfully implemented when:
 
 ## Open Questions
 
-1. Should we add pagination from the start, or only after testing with large datasets?
-   - **Recommendation**: Start simple, add pagination if needed during testing
-
-2. Should games be numbered sequentially (Game #1, #2, #3) or use UUIDs?
+1. Should games be numbered sequentially (Game #1, #2, #3) or use UUIDs?
    - **Recommendation**: Sequential numbers for better UX (easier to reference)
 
-3. Should we preserve the current "View Sample Game" button or replace it entirely?
+2. Should we preserve the current "View Sample Game" button or replace it entirely?
    - **Recommendation**: Keep it for quick access, but also add "All Games" view
 
-4. What's the maximum simulation size we should support with full game storage?
+3. What's the maximum simulation size we should support with full game storage?
    - **Recommendation**: 1,000 games with warning; 5,000 with user confirmation
 
-5. Should clicking a histogram bar navigate to filtered games or open a modal?
+4. Should clicking a histogram bar navigate to filtered games or open a modal?
    - **Recommendation**: Navigate to "All Games" tab with filter applied
+
+5. Should pagination be implemented from the start or added later?
+   - **Recommendation**: Implement pagination from the start to prevent browser performance issues with large datasets (simulations can run 10,000+ iterations). This prevents potential crashes and ensures good UX from day one.
