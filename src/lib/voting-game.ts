@@ -194,16 +194,21 @@ export class VotingGame {
   }
 }
 
+export type SimulationType = 'random' | 'influence';
+
 export interface SimulationResult {
   rounds: number;
   outcome: 'traitor_removed' | 'no_loyalists';
 }
 
-export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number): SimulationResult[] {
+export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number, type: SimulationType = 'random'): SimulationResult[] {
+
   const results: SimulationResult[] = [];
   
   for (let i = 0; i < iterations; i++) {
-    const game = new VotingGame(loyalistCount, traitorCount);
+    const game = type === 'influence' 
+      ? new InfluenceVotingGame(loyalistCount, traitorCount)
+      : new VotingGame(loyalistCount, traitorCount);
     const result = game.run();
     results.push({
       rounds: result.totalRounds,
@@ -212,6 +217,228 @@ export function runSimulation(iterations: number, loyalistCount: number, traitor
   }
   
   return results;
+}
+
+// Influence-based voting game
+export class InfluenceVotingGame {
+  private static readonly MAX_INFLUENCE_SCORE = 100;
+  private static readonly MIN_INFLUENCE_SCORE = 1;
+  
+  private actors: Actor[];
+  private roundHistory: RoundResult[] = [];
+  private currentRound = 0;
+  private influenceScores: Map<string, number> = new Map(); // key: "fromId-toId", value: influence score
+
+  constructor(loyalistCount: number, traitorCount: number) {
+    this.actors = [];
+    
+    for (let i = 0; i < loyalistCount; i++) {
+      this.actors.push({
+        id: i,
+        type: 'loyalist',
+        status: 'active'
+      });
+    }
+    
+    for (let i = loyalistCount; i < loyalistCount + traitorCount; i++) {
+      this.actors.push({
+        id: i,
+        type: 'traitor',
+        status: 'active'
+      });
+    }
+
+    // Initialize influence scores randomly (MIN_INFLUENCE_SCORE to MAX_INFLUENCE_SCORE)
+    for (const actor of this.actors) {
+      for (const target of this.actors) {
+        if (actor.id !== target.id) {
+          const key = `${actor.id}-${target.id}`;
+          const range = InfluenceVotingGame.MAX_INFLUENCE_SCORE - InfluenceVotingGame.MIN_INFLUENCE_SCORE + 1;
+          this.influenceScores.set(key, Math.floor(Math.random() * range) + InfluenceVotingGame.MIN_INFLUENCE_SCORE);
+        }
+      }
+    }
+  }
+
+  private getActiveActors(): Actor[] {
+    return this.actors.filter(a => a.status === 'active');
+  }
+
+  private getActiveLoyalists(): Actor[] {
+    return this.actors.filter(a => a.status === 'active' && a.type === 'loyalist');
+  }
+
+  private getActiveTraitors(): Actor[] {
+    return this.actors.filter(a => a.status === 'active' && a.type === 'traitor');
+  }
+
+  private getInfluence(fromId: number, toId: number): number {
+    const key = `${fromId}-${toId}`;
+    return this.influenceScores.get(key) || 0;
+  }
+
+  private conductVote(eligibleTargets?: Actor[]): Map<number, number> {
+    const votes = new Map<number, number>();
+    const activeActors = this.getActiveActors();
+
+    for (const actor of activeActors) {
+      let validTargets: Actor[];
+
+      if (eligibleTargets) {
+        validTargets = eligibleTargets;
+      } else if (actor.type === 'loyalist') {
+        validTargets = activeActors.filter(a => a.id !== actor.id);
+      } else {
+        validTargets = this.getActiveLoyalists();
+      }
+
+      if (validTargets.length > 0) {
+        // Vote for target with lowest influence score
+        let lowestInfluence = Infinity;
+        let targetId = validTargets[0].id;
+
+        for (const target of validTargets) {
+          const influence = this.getInfluence(actor.id, target.id);
+          if (influence < lowestInfluence) {
+            lowestInfluence = influence;
+            targetId = target.id;
+          }
+        }
+
+        votes.set(targetId, (votes.get(targetId) || 0) + 1);
+      }
+    }
+
+    return votes;
+  }
+
+  private findMostVoted(votes: Map<number, number>): number[] {
+    let maxVotes = 0;
+    const topVoted: number[] = [];
+
+    for (const [actorId, voteCount] of votes.entries()) {
+      if (voteCount > maxVotes) {
+        maxVotes = voteCount;
+        topVoted.length = 0;
+        topVoted.push(actorId);
+      } else if (voteCount === maxVotes) {
+        topVoted.push(actorId);
+      }
+    }
+
+    return topVoted;
+  }
+
+  private randomChoice<T>(array: T[]): T {
+    return array[Math.floor(Math.random() * array.length)];
+  }
+
+  private resolvePhaseOne(): { votes: Map<number, number>; removedId: number } {
+    let votes = this.conductVote();
+    let mostVoted = this.findMostVoted(votes);
+    let tieBreakAttempts = 0;
+    const MAX_TIE_BREAKS = 10;
+
+    while (mostVoted.length > 1 && tieBreakAttempts < MAX_TIE_BREAKS) {
+      const tiedActors = this.actors.filter(a => mostVoted.includes(a.id) && a.status === 'active');
+      votes = this.conductVote(tiedActors);
+      mostVoted = this.findMostVoted(votes);
+      tieBreakAttempts++;
+    }
+
+    const removedId = mostVoted.length > 0 ? this.randomChoice(mostVoted) : this.randomChoice(this.getActiveActors()).id;
+    const actor = this.actors.find(a => a.id === removedId);
+    if (actor) {
+      actor.status = 'removed';
+    }
+
+    return { votes, removedId };
+  }
+
+  private resolvePhaseTwo(): number {
+    const activeLoyalists = this.getActiveLoyalists();
+    if (activeLoyalists.length === 0) {
+      return -1;
+    }
+
+    // Find loyalist with highest total influence
+    let highestInfluence = -1;
+    let targetId = activeLoyalists[0].id;
+
+    for (const loyalist of activeLoyalists) {
+      // Calculate total influence this loyalist has over all other active actors
+      let totalInfluence = 0;
+      const activeActors = this.getActiveActors();
+      
+      for (const other of activeActors) {
+        if (other.id !== loyalist.id) {
+          totalInfluence += this.getInfluence(loyalist.id, other.id);
+        }
+      }
+
+      if (totalInfluence > highestInfluence) {
+        highestInfluence = totalInfluence;
+        targetId = loyalist.id;
+      }
+    }
+
+    const removed = this.actors.find(a => a.id === targetId);
+    if (removed) {
+      removed.status = 'removed';
+    }
+    return targetId;
+  }
+
+  private isGameOver(): boolean {
+    const activeTraitors = this.getActiveTraitors();
+    const activeLoyalists = this.getActiveLoyalists();
+    
+    return activeTraitors.length === 0 || activeLoyalists.length === 0;
+  }
+
+  private getOutcome(): 'traitor_removed' | 'no_loyalists' {
+    const activeTraitors = this.getActiveTraitors();
+    return activeTraitors.length === 0 ? 'traitor_removed' : 'no_loyalists';
+  }
+
+  public run(): GameResult {
+    while (!this.isGameOver()) {
+      this.currentRound++;
+
+      const phaseOne = this.resolvePhaseOne();
+      
+      if (this.isGameOver()) {
+        this.roundHistory.push({
+          roundNumber: this.currentRound,
+          phaseOneVotes: phaseOne.votes,
+          phaseOneRemoved: phaseOne.removedId,
+          phaseTwoRemoved: -1,
+          remainingActors: this.getActiveActors().map(a => ({ ...a }))
+        });
+        break;
+      }
+
+      const phaseTwoRemoved = this.resolvePhaseTwo();
+
+      this.roundHistory.push({
+        roundNumber: this.currentRound,
+        phaseOneVotes: phaseOne.votes,
+        phaseOneRemoved: phaseOne.removedId,
+        phaseTwoRemoved,
+        remainingActors: this.getActiveActors().map(a => ({ ...a }))
+      });
+
+      if (this.isGameOver()) {
+        break;
+      }
+    }
+
+    return {
+      rounds: this.roundHistory,
+      totalRounds: this.currentRound,
+      outcome: this.getOutcome()
+    };
+  }
 }
 
 export function calculateStatistics(results: SimulationResult[]): {
