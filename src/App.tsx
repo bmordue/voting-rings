@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Histogram } from '@/components/Histogram';
 import { GameDetails } from '@/components/GameDetails';
-import { runSimulation, calculateStatistics, VotingGame, EndCondition } from '@/lib/voting-game';
+import { runSimulation, calculateStatistics, VotingGame, EndCondition, InfluenceVotingGame, SimulationType, SimulationResult } from '@/lib/voting-game';
 import { Play, ChartBar, Eye, ArrowClockwise, Info } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
@@ -19,7 +19,8 @@ function App() {
   const [traitors, setTraitors] = useState(4);
   const [iterations, setIterations] = useState(1000);
   const [endCondition, setEndCondition] = useState<EndCondition>('first_traitor_removed');
-  const [results, setResults] = useState<number[]>([]);
+  const [simulationType, setSimulationType] = useState<SimulationType>('random');
+  const [results, setResults] = useState<SimulationResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sampleGame, setSampleGame] = useState<ReturnType<VotingGame['run']> | null>(null);
@@ -40,14 +41,14 @@ function App() {
 
     const batchSize = 100;
     const batches = Math.ceil(iterations / batchSize);
-    const allResults: number[] = [];
+    const allResults: SimulationResult[] = [];
 
     for (let i = 0; i < batches; i++) {
       const currentBatchSize = Math.min(batchSize, iterations - i * batchSize);
       
       await new Promise(resolve => setTimeout(resolve, 0));
       
-      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, endCondition);
+      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, simulationType, endCondition);
       allResults.push(...batchResults);
       
       setProgress(((i + 1) / batches) * 100);
@@ -55,7 +56,9 @@ function App() {
 
     setResults(allResults);
     
-    const game = new VotingGame(loyalists, traitors, endCondition);
+    const game = simulationType === 'influence'
+      ? new InfluenceVotingGame(loyalists, traitors)
+      : new VotingGame(loyalists, traitors, endCondition);
     const gameResult = game.run();
     setSampleGame(gameResult);
     
@@ -96,6 +99,19 @@ function App() {
               <CardDescription>Configure the initial game state</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="simulation-type">Simulation Type</Label>
+                <Select value={simulationType} onValueChange={(value) => setSimulationType(value as SimulationType)}>
+                  <SelectTrigger id="simulation-type" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="random">Random Voting</SelectItem>
+                    <SelectItem value="influence">Influence-Based</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="loyalists">Loyalists</Label>
@@ -298,34 +314,41 @@ function App() {
             <CardTitle>Game Rules</CardTitle>
           </CardHeader>
           <CardContent className="prose prose-sm max-w-none">
-            <div className="space-y-4 text-sm">
-              <div>
-                <h4 className="font-semibold mb-2">Setup</h4>
-                <p className="text-muted-foreground">
-                  The game starts with a group of actors consisting of loyalists and traitors.
-                </p>
-              </div>
+            <Tabs defaultValue={simulationType} value={simulationType} className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="random">Random Voting</TabsTrigger>
+                <TabsTrigger value="influence">Influence-Based</TabsTrigger>
+              </TabsList>
               
-              <div>
-                <h4 className="font-semibold mb-2">Phase 1: Voting</h4>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Each actor votes to remove one other actor</li>
-                  <li>Loyalists vote randomly for anyone except themselves</li>
-                  <li>Traitors vote randomly for any loyalist</li>
-                  <li>The actor with the most votes is removed</li>
-                  <li>If there's a tie, a run-off vote occurs between tied actors only</li>
-                </ul>
-              </div>
+              <TabsContent value="random">
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <h4 className="font-semibold mb-2">Setup</h4>
+                    <p className="text-muted-foreground">
+                      The game starts with a group of actors consisting of loyalists and traitors.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold mb-2">Phase 1: Voting</h4>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      <li>Each actor votes to remove one other actor</li>
+                      <li>Loyalists vote randomly for anyone except themselves</li>
+                      <li>Traitors vote randomly for any loyalist</li>
+                      <li>The actor with the most votes is removed</li>
+                      <li>If there's a tie, a run-off vote occurs between tied actors only</li>
+                    </ul>
+                  </div>
 
-              <div>
-                <h4 className="font-semibold mb-2">Phase 2: Random Removal</h4>
-                <p className="text-muted-foreground">
-                  A random loyalist is removed from the group.
-                </p>
-              </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Phase 2: Random Removal</h4>
+                    <p className="text-muted-foreground">
+                      A random loyalist is removed from the group.
+                    </p>
+                  </div>
 
-              <div>
-                <h4 className="font-semibold mb-2">Game End</h4>
+                  <div>
+                    <h4 className="font-semibold mb-2">Game End</h4>
                 <p className="text-muted-foreground mb-2">
                   The game ending condition can be configured:
                 </p>
@@ -333,8 +356,46 @@ function App() {
                   <li><strong>First Traitor Removed:</strong> The game ends when either a traitor is removed (loyalists win) or no loyalists remain (traitors win).</li>
                   <li><strong>All One Type Remaining:</strong> The game continues until all remaining actors are either loyalists (loyalists win) or all traitors (traitors win).</li>
                 </ul>
-              </div>
-            </div>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="influence">
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <h4 className="font-semibold mb-2">Setup</h4>
+                    <p className="text-muted-foreground">
+                      The game starts with a group of actors consisting of loyalists and traitors. Each actor has an influence score (1-100) against every other actor, set randomly at the start and never changing.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold mb-2">Phase 1: Voting</h4>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      <li>Each actor votes to remove one other actor</li>
+                      <li>Loyalists vote for the actor they have the lowest influence over</li>
+                      <li>Traitors vote for the loyalist they have the lowest influence over</li>
+                      <li>The actor with the most votes is removed</li>
+                      <li>If there's a tie, a run-off vote occurs between tied actors only</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-2">Phase 2: Influence-Based Removal</h4>
+                    <p className="text-muted-foreground">
+                      The loyalist with the highest total influence over all other actors is removed from the group.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-2">Game End</h4>
+                    <p className="text-muted-foreground">
+                      The game ends when either a traitor is removed (loyalists win) or no loyalists remain (traitors win).
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
