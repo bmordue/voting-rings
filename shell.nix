@@ -1,15 +1,12 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
-  nodejs = pkgs.nodejs-18_x;
+  nodejs = pkgs.nodejs_24;
 in
 pkgs.mkShell {
   buildInputs = with pkgs; [
     # Node.js and package manager
     nodejs
-    npm
-    yarn
-    pnpm
 
     # Development tools
     git
@@ -22,7 +19,6 @@ pkgs.mkShell {
     gcc
 
     # Additional tools that might be needed
-    bash
     coreutils
   ];
 
