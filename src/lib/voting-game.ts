@@ -20,7 +20,7 @@ export class VotingGame {
   private static readonly NO_VALID_TARGET = -1;
   private endCondition: EndCondition;
 
-  constructor(loyalistCount: number, traitorCount: number, endCondition: EndCondition = 'first_traitor_removed', gameType: GameType = 'random') {
+  constructor(loyalistCount: number, traitorCount: number, endCondition: EndCondition, gameType: GameType) {
     this.actors = [];
     this.gameType = gameType;
     this.endCondition = endCondition;
@@ -83,15 +83,14 @@ export class VotingGame {
     return newSuspect.id;
   }
 
-  private conductVote(eligibleTargets?: Actor[]): Map<number, number> {
+  private conductVote(eligibleTargets: Actor[]): Map<number, number> {
     const votes = new Map<number, number>();
     const activeActors = this.getActiveActors();
-    const targets = eligibleTargets || activeActors;
 
     for (const actor of activeActors) {
       let targetId: number | undefined;
 
-      if (eligibleTargets) {
+      if (eligibleTargets.length > 0) {
         // In tie-breaking scenarios, vote randomly from eligible targets
         const target = this.randomChoice(eligibleTargets);
         targetId = target.id;
@@ -148,7 +147,7 @@ export class VotingGame {
   }
 
   private resolvePhaseOne(): { votes: Map<number, number>; removedId: number } {
-    let votes = this.conductVote();
+    let votes = this.conductVote([]);
     let mostVoted = this.findMostVoted(votes);
     let tieBreakAttempts = 0;
     const MAX_TIE_BREAKS = 10;
@@ -324,14 +323,14 @@ export class InfluenceVotingGame {
     return this.influenceScores.get(key) || 0;
   }
 
-  private conductVote(eligibleTargets?: Actor[]): Map<number, number> {
+  private conductVote(eligibleTargets: Actor[]): Map<number, number> {
     const votes = new Map<number, number>();
     const activeActors = this.getActiveActors();
 
     for (const actor of activeActors) {
       let validTargets: Actor[];
 
-      if (eligibleTargets) {
+      if (eligibleTargets.length > 0) {
         validTargets = eligibleTargets;
       } else if (actor.type === 'loyalist') {
         validTargets = activeActors.filter(a => a.id !== actor.id);
@@ -381,7 +380,7 @@ export class InfluenceVotingGame {
   }
 
   private resolvePhaseOne(): { votes: Map<number, number>; removedId: number } {
-    let votes = this.conductVote();
+    let votes = this.conductVote([]);
     let mostVoted = this.findMostVoted(votes);
     let tieBreakAttempts = 0;
     const MAX_TIE_BREAKS = 10;
@@ -491,8 +490,8 @@ export class InfluenceVotingGame {
 }
 
 export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number,
-  type: SimulationType = 'random', endCondition: EndCondition = 'first_traitor_removed',
-  gameType: GameType = 'random'): SimulationResult[] {
+  type: SimulationType, endCondition: EndCondition,
+  gameType: GameType): SimulationResult[] {
 
   const results: SimulationResult[] = [];
 
