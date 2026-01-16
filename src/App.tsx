@@ -10,8 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Histogram } from '@/components/Histogram';
 import { GameDetails } from '@/components/GameDetails';
+import { GameList } from '@/components/GameList';
 import { VotingGame, InfluenceVotingGame, runSimulation, calculateStatistics } from '@/lib/voting-game';
-import type { EndCondition, SimulationType, SimulationResult, GameType } from '@/lib/interfaces';
+import type { EndCondition, SimulationType, GameResult, GameType } from '@/lib/interfaces';
 import { Play, ChartBar, Eye, ArrowClockwise, Info } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
@@ -22,10 +23,12 @@ function App() {
   const [gameType, setGameType] = useState<GameType>('random');
   const [endCondition, setEndCondition] = useState<EndCondition>('first_traitor_removed');
   const [simulationType, setSimulationType] = useState<SimulationType>('random');
-  const [results, setResults] = useState<SimulationResult[]>([]);
+  const [results, setResults] = useState<GameResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sampleGame, setSampleGame] = useState<ReturnType<VotingGame['run']> | null>(null);
+  const [selectedGame, setSelectedGame] = useState<GameResult | null>(null);
+  const [isGameDialogOpen, setIsGameDialogOpen] = useState(false);
 
   const handleRunSimulation = async () => {
     if (loyalists < 1 || traitors < 1) {
@@ -43,14 +46,15 @@ function App() {
 
     const batchSize = 100;
     const batches = Math.ceil(iterations / batchSize);
-    const allResults: SimulationResult[] = [];
+    const allResults: GameResult[] = [];
 
     for (let i = 0; i < batches; i++) {
       const currentBatchSize = Math.min(batchSize, iterations - i * batchSize);
       
       await new Promise(resolve => setTimeout(resolve, 0));
       
-      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, simulationType, endCondition, gameType);
+      const startId = i * batchSize;
+      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, simulationType, endCondition, gameType, startId);
       allResults.push(...batchResults);
       
       setProgress(((i + 1) / batches) * 100);
@@ -73,7 +77,13 @@ function App() {
   const handleReset = () => {
     setResults([]);
     setSampleGame(null);
+    setSelectedGame(null);
     setProgress(0);
+  };
+
+  const handleSelectGame = (game: GameResult) => {
+    setSelectedGame(game);
+    setIsGameDialogOpen(true);
   };
 
   return (
@@ -301,40 +311,81 @@ function App() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Simulation Results</CardTitle>
-                <CardDescription>Distribution of rounds to completion</CardDescription>
-              </div>
-              {sampleGame && (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">
-                      <Eye size={18} className="mr-2" />
-                      View Sample Game
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Sample Game Details</DialogTitle>
-                      <DialogDescription>
-                        Step-by-step breakdown of a single game simulation
-                      </DialogDescription>
-                    </DialogHeader>
-                    <GameDetails 
-                      game={sampleGame} 
-                      initialLoyalists={loyalists}
-                      initialTraitors={traitors}
-                    />
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
+            <CardTitle>Simulation Results</CardTitle>
+            <CardDescription>
+              {results.length > 0 
+                ? `Explore ${results.length.toLocaleString()} simulated games`
+                : 'Run a simulation to see results'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Histogram data={results} width={Math.min(1000, window.innerWidth - 100)} />
+            {results.length > 0 ? (
+              <Tabs defaultValue="overview" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="overview">
+                    <ChartBar size={16} className="mr-2" />
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger value="all-games">
+                    <Eye size={16} className="mr-2" />
+                    All Games
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-4">
+                  <Histogram data={results} width={Math.min(1000, window.innerWidth - 100)} />
+                  
+                  {sampleGame && (
+                    <div className="flex justify-end">
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedGame(sampleGame);
+                          setIsGameDialogOpen(true);
+                        }}
+                      >
+                        <Eye size={18} className="mr-2" />
+                        View Sample Game
+                      </Button>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="all-games">
+                  <GameList
+                    games={results}
+                    onSelectGame={handleSelectGame}
+                  />
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <div className="text-center text-muted-foreground py-12">
+                Run a simulation to view results
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Game Details Dialog */}
+        <Dialog open={isGameDialogOpen} onOpenChange={setIsGameDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedGame?.id ? `Game #${selectedGame.id} Details` : 'Game Details'}
+              </DialogTitle>
+              <DialogDescription>
+                Step-by-step breakdown of this game simulation
+              </DialogDescription>
+            </DialogHeader>
+            {selectedGame && (
+              <GameDetails 
+                game={selectedGame} 
+                initialLoyalists={loyalists}
+                initialTraitors={traitors}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         <Card className="mt-6">
           <CardHeader>

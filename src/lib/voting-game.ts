@@ -491,9 +491,9 @@ export class InfluenceVotingGame {
 
 export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number,
   type: SimulationType, endCondition: EndCondition,
-  gameType: GameType): SimulationResult[] {
+  gameType: GameType, startId: number = 0): GameResult[] {
 
-  const results: SimulationResult[] = [];
+  const results: GameResult[] = [];
 
   for (let i = 0; i < iterations; i++) {
     const game = type === 'influence'
@@ -501,14 +501,14 @@ export function runSimulation(iterations: number, loyalistCount: number, traitor
       : new VotingGame(loyalistCount, traitorCount, endCondition, gameType);
     const result = game.run();
     results.push({
-      rounds: result.totalRounds,
-      outcome: result.outcome
+      ...result,
+      id: startId + i + 1
     });
   }
 
   return results;
 }
-export function calculateStatistics(results: SimulationResult[]): {
+export function calculateStatistics(results: GameResult[]): {
   mean: number;
   median: number;
   mode: number;
@@ -520,7 +520,7 @@ export function calculateStatistics(results: SimulationResult[]): {
     return { mean: 0, median: 0, mode: 0, min: 0, max: 0, stdDev: 0 };
   }
 
-  const rounds = results.map(r => r.rounds);
+  const rounds = results.map(r => r.totalRounds);
   const sorted = [...rounds].sort((a, b) => a - b);
   const min = sorted[0];
   const max = sorted[sorted.length - 1];
