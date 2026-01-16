@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { GameResult } from '@/lib/interfaces';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,6 @@ import { CaretLeft, CaretRight, CaretDoubleLeft, CaretDoubleRight, ArrowUp, Arro
 
 interface GameListProps {
   games: GameResult[];
-  loyalistCount: number;
-  traitorCount: number;
   onSelectGame: (game: GameResult) => void;
 }
 
@@ -19,7 +17,7 @@ type SortField = 'id' | 'rounds' | 'outcome';
 type SortDirection = 'asc' | 'desc';
 type OutcomeFilter = 'all' | 'traitor_removed' | 'all_loyalists' | 'no_loyalists' | 'all_traitors';
 
-export function GameList({ games, loyalistCount, traitorCount, onSelectGame }: GameListProps) {
+export function GameList({ games, onSelectGame }: GameListProps) {
   const [sortField, setSortField] = useState<SortField>('id');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>('all');
@@ -73,7 +71,7 @@ export function GameList({ games, loyalistCount, traitorCount, onSelectGame }: G
   const paginatedGames = filteredAndSortedGames.slice(startIndex, endIndex);
 
   // Reset to page 1 when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [outcomeFilter, searchQuery, sortField, sortDirection, itemsPerPage]);
 

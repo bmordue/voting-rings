@@ -491,7 +491,7 @@ export class InfluenceVotingGame {
 
 export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number,
   type: SimulationType, endCondition: EndCondition,
-  gameType: GameType): GameResult[] {
+  gameType: GameType, startId: number = 0): GameResult[] {
 
   const results: GameResult[] = [];
 
@@ -502,7 +502,7 @@ export function runSimulation(iterations: number, loyalistCount: number, traitor
     const result = game.run();
     results.push({
       ...result,
-      id: i + 1
+      id: startId + i + 1
     });
   }
 
