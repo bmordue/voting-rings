@@ -154,4 +154,6 @@ See [PRD.md](PRD.md) for complete design specifications.
 
 ## License
 
-The Spark Template files and resources from GitHub are licensed under the terms of the MIT license, Copyright GitHub, Inc.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+The project is built on the Spark Template from GitHub, which is also MIT licensed.
