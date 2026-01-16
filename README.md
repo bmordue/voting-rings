@@ -103,7 +103,7 @@ This project includes comprehensive unit tests for the core business logic. See 
 
 **Coverage:**
 - 99%+ coverage on core business logic (`src/lib`)
-- 38+ unit tests across voting game simulation and utilities
+- 38 unit tests across voting game simulation and utilities
 - Automated CI/CD with GitHub Actions
 
 **Quick Start:**
