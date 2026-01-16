@@ -65,10 +65,10 @@ export function runSimulation(
 ```
 
 **Add game identifier:**
-Consider adding a unique ID to each game for easier tracking:
+Add a unique ID to each game for easier tracking:
 ```typescript
 export interface GameResult {
-  id?: string; // Optional: UUID (using existing uuid package) or simple counter
+  id: number; // simple counter
   rounds: RoundResult[];
   totalRounds: number;
   outcome: 'traitor_removed' | 'no_loyalists';
@@ -90,7 +90,6 @@ const [results, setResults] = useState<GameResult[]>([]);
 The `calculateStatistics()` function currently accepts `number[]`. To maintain backward compatibility and keep the function focused on its single responsibility:
 - Call it with `results.map(r => r.totalRounds)` when needed
 - This approach avoids breaking changes and keeps statistics calculation separate from data structure concerns
-- **Future enhancement**: Consider overloading the function to accept both `number[]` and `GameResult[]` with appropriate type guards to eliminate the mapping operation
 
 ### 3. UI Components
 
@@ -109,6 +108,8 @@ interface GameListProps {
 **Features:**
 - Display all games in a scrollable list or table
 - Show key information per game:
+  - Game type
+  - Game ending conditions
   - Game number/ID
   - Total rounds
   - Outcome (traitor removed vs no loyalists)
@@ -216,7 +217,7 @@ Alternatively, use the existing dialog pattern but enhance it to show a list fir
 3. **Progressive enhancement**: Offer "light mode" (just round counts) and "detailed mode" (full results)
 4. **Virtual scrolling**: Use react-virtual or similar for rendering large lists
 
-**Recommended approach for MVP:**
+**MVP:**
 - Base the storage limit on an estimated memory budget rather than a fixed game count
   - Estimate memory as: `estimatedBytes = gameCount * avgBytesPerGame`
   - With the current 1–5KB/game estimate, storing full results for up to 10,000 games (~10–50MB) should be acceptable and aligns with the existing UI limit (`max={10000}` in `App.tsx`)
@@ -226,11 +227,11 @@ Alternatively, use the existing dialog pattern but enhance it to show a list fir
 
 ### 5. Data Persistence - Do We Need a Database?
 
-**Short Answer: No, not for the initial implementation.**
+No, not for the initial implementation.
 
 **Analysis:**
 
-**Current Approach - In-Memory Storage (Recommended for MVP):**
+**Current Approach - In-Memory Storage (retain for MVP):**
 - Store simulation results in React component state
 - Pros:
   - Simple implementation with no additional infrastructure
@@ -242,27 +243,7 @@ Alternatively, use the existing dialog pattern but enhance it to show a list fir
   - Results lost on page refresh
   - Cannot share results between users or sessions
   - Limited to browser memory constraints
-
-**When You WOULD Need a Database:**
-- **Persistence across sessions**: Users want to save simulation results and return to them later
-- **Sharing results**: Users want to share specific simulation runs with others via links
-- **Historical analysis**: Users want to compare results across multiple simulation sessions over time
-- **Collaboration**: Multiple users analyzing the same simulation data
-- **Very large datasets**: Simulations exceeding browser memory limits (100k+ games)
-
-**Alternative: Browser Storage (Middle Ground):**
-Before implementing a full database, consider browser storage options:
-- **localStorage**: Store recent simulations (5MB limit, synchronous)
-- **IndexedDB**: Store larger datasets in browser (asynchronous, more complex)
-- Pros: Persistence without server infrastructure
-- Cons: Still limited to single user/browser, storage limits vary by browser
-
-**Recommendation:**
-1. **Phase 1 (this implementation)**: Use in-memory React state only
-2. **Phase 2 (if users request it)**: Add localStorage/IndexedDB for session persistence
-3. **Phase 3 (if scaling needed)**: Implement backend database with API
-
-This incremental approach validates user needs before investing in database infrastructure.
+ before investing in database infrastructure.
 
 ### 6. Backward Compatibility
 
@@ -448,20 +429,3 @@ The feature will be considered successfully implemented when:
 7. ✅ The UI follows the existing design system and patterns
 8. ✅ Unit tests cover new/modified functions
 9. ✅ No memory leaks or performance degradation
-
-## Open Questions
-
-1. Should games be numbered sequentially (Game #1, #2, #3) or use UUIDs?
-   - **Recommendation**: Sequential numbers for better UX (easier to reference)
-
-2. Should we preserve the current "View Sample Game" button or replace it entirely?
-   - **Recommendation**: Keep it for quick access, but also add "All Games" view
-
-3. What's the maximum simulation size we should support with full game storage?
-   - **Recommendation**: 1,000 games with warning; 5,000 with user confirmation
-
-4. Should clicking a histogram bar navigate to filtered games or open a modal?
-   - **Recommendation**: Navigate to "All Games" tab with filter applied
-
-5. Should pagination be implemented from the start or added later?
-   - **Recommendation**: Implement pagination from the start to prevent browser performance issues with large datasets (simulations can run 10,000+ iterations). This prevents potential crashes and ensures good UX from day one.
