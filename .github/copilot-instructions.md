@@ -47,6 +47,7 @@ npm run coverage   # Generate coverage report
 - Prefer **interfaces** over type aliases for object shapes
 - Use **path aliases**: `@/*` maps to `./src/*`
 - Do NOT use `any` type - use `unknown` if type is truly unknown
+- **No default parameter values or optional parameters** in core business logic - All parameters must be specified explicitly to ensure caller intentionality (e.g., in `VotingGame` and `runSimulation` functions).
 
 ### React
 
