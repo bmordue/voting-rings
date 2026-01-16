@@ -70,9 +70,36 @@ export function GameDetails({ game, initialLoyalists, initialTraitors }: GameDet
 
               <div className="space-y-3">
                 <div>
-                  <div className="text-sm font-medium mb-2 text-muted-foreground">Phase 1: Voting</div>
+                  <div className="text-sm font-medium mb-2 text-muted-foreground">Phase 1: Voting Results</div>
+                  
+                  {/* Vote breakdown */}
+                  {round.phaseOneVotes.size > 0 && (
+                    <div className="space-y-1 mb-3 p-3 bg-muted/30 rounded-md">
+                      <div className="text-xs font-semibold text-muted-foreground mb-2">Vote Distribution</div>
+                      {Array.from(round.phaseOneVotes.entries())
+                        .sort((a, b) => b[1] - a[1]) // Sort by vote count descending
+                        .map(([actorId, voteCount]) => {
+                          const isRemoved = actorId === round.phaseOneRemoved;
+                          return (
+                            <div 
+                              key={actorId} 
+                              className={`flex items-center justify-between ${isRemoved ? 'font-semibold' : ''}`}
+                            >
+                              {getActorBadge(actorId)}
+                              <span 
+                                className="text-sm" 
+                                style={{ fontFamily: 'var(--font-mono)' }}
+                              >
+                                {voteCount} vote{voteCount !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                  
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">Removed:</span>
+                    <span className="text-sm font-semibold">Removed:</span>
                     {getActorBadge(round.phaseOneRemoved)}
                   </div>
                 </div>

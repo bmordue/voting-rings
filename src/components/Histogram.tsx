@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
-import type { SimulationResult } from '@/lib/interfaces';
+import type { GameResult } from '@/lib/interfaces';
 
 interface HistogramProps {
-  data: SimulationResult[];
+  data: GameResult[];
   width?: number;
   height?: number;
 }
@@ -37,13 +37,13 @@ export function Histogram({ data, width = 800, height = 400 }: HistogramProps) {
     const dataByRounds = new Map<number, { loyalistWins: number; traitorWins: number }>();
     
     for (const result of data) {
-      const existing = dataByRounds.get(result.rounds) || { loyalistWins: 0, traitorWins: 0 };
-      if (result.outcome === 'traitor_removed') {
+      const existing = dataByRounds.get(result.totalRounds) || { loyalistWins: 0, traitorWins: 0 };
+      if (result.outcome === 'traitor_removed' || result.outcome === 'all_loyalists') {
         existing.loyalistWins++;
       } else {
         existing.traitorWins++;
       }
-      dataByRounds.set(result.rounds, existing);
+      dataByRounds.set(result.totalRounds, existing);
     }
 
     const histData: HistDataPoint[] = Array.from(dataByRounds.entries())

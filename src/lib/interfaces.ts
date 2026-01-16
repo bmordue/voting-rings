@@ -24,6 +24,7 @@ export interface RoundResult {
 }
 
 export interface GameResult {
+  id?: number;
   rounds: RoundResult[];
   totalRounds: number;
   outcome: 'traitor_removed' | 'no_loyalists' | 'all_loyalists' | 'all_traitors';
