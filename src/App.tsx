@@ -53,7 +53,8 @@ function App() {
       
       await new Promise(resolve => setTimeout(resolve, 0));
       
-      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, simulationType, endCondition, gameType);
+      const startId = i * batchSize;
+      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, simulationType, endCondition, gameType, startId);
       allResults.push(...batchResults);
       
       setProgress(((i + 1) / batches) * 100);
@@ -353,8 +354,6 @@ function App() {
                 <TabsContent value="all-games">
                   <GameList
                     games={results}
-                    loyalistCount={loyalists}
-                    traitorCount={traitors}
                     onSelectGame={handleSelectGame}
                   />
                 </TabsContent>
