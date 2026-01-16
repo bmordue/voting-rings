@@ -17,6 +17,9 @@ This is a Monte Carlo simulation platform for exploring statistical outcomes of 
 ## Project Structure
 
 - `src/lib/` - Core business logic (voting game simulation, utilities)
+  - `interfaces.ts` - Type definitions and interfaces for the entire application
+  - `voting-game.ts` - VotingGame and InfluenceVotingGame classes, simulation functions
+  - `utils.ts` - Utility functions
 - `src/components/` - React components (UI components in `ui/` subdirectory)
 - `src/hooks/` - Custom React hooks
 - `src/test/` - Test setup and utilities
@@ -44,6 +47,7 @@ npm run coverage   # Generate coverage report
 - Prefer **interfaces** over type aliases for object shapes
 - Use **path aliases**: `@/*` maps to `./src/*`
 - Do NOT use `any` type - use `unknown` if type is truly unknown
+- **No default parameter values or optional parameters** in core business logic - All parameters must be specified explicitly to ensure caller intentionality (e.g., in `VotingGame` and `runSimulation` functions).
 
 ### React
 
@@ -59,6 +63,13 @@ npm run coverage   # Generate coverage report
 - **Interfaces/Types**: PascalCase (e.g., `Actor`, `GameResult`)
 - **Functions/Variables**: camelCase (e.g., `runSimulation`, `currentRound`)
 - **Constants**: UPPER_SNAKE_CASE for true constants (e.g., `MAX_ROUNDS`)
+
+### Interface and Type Organization
+
+- **All type definitions and interfaces belong in `src/lib/interfaces.ts`**
+- Import interfaces where needed: `import type { Actor, GameResult } from '@/lib/interfaces'`
+- For implementation files (classes, functions), use: `import { VotingGame, runSimulation } from '@/lib/voting-game'`
+- Use `type` keyword for imports of types-only to avoid circular dependencies: `import type { GameType, EndCondition } from '@/lib/interfaces'`
 
 ### Code Style
 

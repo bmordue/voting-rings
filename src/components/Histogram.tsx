@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
-import { SimulationResult } from '@/lib/voting-game';
+import type { SimulationResult } from '@/lib/interfaces';
 
 interface HistogramProps {
   data: SimulationResult[];

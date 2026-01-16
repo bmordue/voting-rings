@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Histogram } from '@/components/Histogram';
 import { GameDetails } from '@/components/GameDetails';
-import { runSimulation, calculateStatistics, VotingGame, EndCondition, InfluenceVotingGame, SimulationType, SimulationResult } from '@/lib/voting-game';
+import { VotingGame, InfluenceVotingGame, runSimulation, calculateStatistics } from '@/lib/voting-game';
+import type { EndCondition, SimulationType, SimulationResult, GameType } from '@/lib/interfaces';
 import { Play, ChartBar, Eye, ArrowClockwise, Info } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
@@ -18,6 +19,7 @@ function App() {
   const [loyalists, setLoyalists] = useState(16);
   const [traitors, setTraitors] = useState(4);
   const [iterations, setIterations] = useState(1000);
+  const [gameType, setGameType] = useState<GameType>('random');
   const [endCondition, setEndCondition] = useState<EndCondition>('first_traitor_removed');
   const [simulationType, setSimulationType] = useState<SimulationType>('random');
   const [results, setResults] = useState<SimulationResult[]>([]);
@@ -48,7 +50,7 @@ function App() {
       
       await new Promise(resolve => setTimeout(resolve, 0));
       
-      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, simulationType, endCondition);
+      const batchResults = runSimulation(currentBatchSize, loyalists, traitors, simulationType, endCondition, gameType);
       allResults.push(...batchResults);
       
       setProgress(((i + 1) / batches) * 100);
@@ -58,7 +60,7 @@ function App() {
     
     const game = simulationType === 'influence'
       ? new InfluenceVotingGame(loyalists, traitors)
-      : new VotingGame(loyalists, traitors, endCondition);
+      : new VotingGame(loyalists, traitors, endCondition, gameType);
     const gameResult = game.run();
     setSampleGame(gameResult);
     
@@ -99,6 +101,31 @@ function App() {
               <CardDescription>Configure the initial game state</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="gameType">Voting Strategy</Label>
+                <Select 
+                  value={gameType} 
+                  onValueChange={(value) => {
+                    if (value === 'random' || value === 'fixate') {
+                      setGameType(value);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="gameType" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="random">Random</SelectItem>
+                    <SelectItem value="fixate">Fixate on Suspect</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {gameType === 'random' 
+                    ? 'Loyalists vote randomly each round' 
+                    : 'Loyalists fixate on a suspect until removed'}
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="simulation-type">Simulation Type</Label>
                 <Select value={simulationType} onValueChange={(value) => setSimulationType(value as SimulationType)}>
@@ -353,6 +380,12 @@ function App() {
                   The game ending condition can be configured:
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  <li>Each actor votes to remove one other actor</li>
+                  <li><strong>Random Strategy:</strong> Loyalists vote randomly for anyone except themselves</li>
+                  <li><strong>Fixate Strategy:</strong> Each loyalist votes for the same suspect until that actor is removed, then selects a new random suspect</li>
+                  <li>Traitors vote randomly for any loyalist</li>
+                  <li>The actor with the most votes is removed</li>
+                  <li>If there's a tie, a run-off vote occurs between tied actors only</li>
                   <li><strong>First Traitor Removed:</strong> The game ends when either a traitor is removed (loyalists win) or no loyalists remain (traitors win).</li>
                   <li><strong>All One Type Remaining:</strong> The game continues until all remaining actors are either loyalists (loyalists win) or all traitors (traitors win).</li>
                 </ul>

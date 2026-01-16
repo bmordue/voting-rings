@@ -1,43 +1,30 @@
-export type ActorType = 'loyalist' | 'traitor';
-export type ActorStatus = 'active' | 'removed';
-export type EndCondition = 'first_traitor_removed' | 'all_one_type';
-
-export interface Actor {
-  id: number;
-  type: ActorType;
-  status: ActorStatus;
-}
-
-export interface VoteResult {
-  targetId: number;
-  votes: number;
-}
-
-export interface RoundResult {
-  roundNumber: number;
-  phaseOneVotes: Map<number, number>;
-  phaseOneRemoved: number;
-  phaseTwoRemoved: number;
-  remainingActors: Actor[];
-}
-
-export interface GameResult {
-  rounds: RoundResult[];
-  totalRounds: number;
-  outcome: 'traitor_removed' | 'no_loyalists' | 'all_loyalists' | 'all_traitors';
-  endCondition: EndCondition;
-}
+import {
+  Actor,
+  ActorType,
+  ActorStatus,
+  GameType,
+  EndCondition,
+  VoteResult,
+  RoundResult,
+  GameResult,
+  SimulationType,
+  SimulationResult
+} from './interfaces';
 
 export class VotingGame {
   private actors: Actor[];
   private roundHistory: RoundResult[] = [];
   private currentRound = 0;
+  private gameType: GameType;
+  private loyalistSuspects: Map<number, number> = new Map(); // Maps loyalist ID to their suspect ID
+  private static readonly NO_VALID_TARGET = -1;
   private endCondition: EndCondition;
 
-  constructor(loyalistCount: number, traitorCount: number, endCondition: EndCondition = 'first_traitor_removed') {
+  constructor(loyalistCount: number, traitorCount: number, endCondition: EndCondition, gameType: GameType) {
     this.actors = [];
+    this.gameType = gameType;
     this.endCondition = endCondition;
-    
+
     for (let i = 0; i < loyalistCount; i++) {
       this.actors.push({
         id: i,
@@ -45,7 +32,7 @@ export class VotingGame {
         status: 'active'
       });
     }
-    
+
     for (let i = loyalistCount; i < loyalistCount + traitorCount; i++) {
       this.actors.push({
         id: i,
@@ -71,25 +58,71 @@ export class VotingGame {
     return array[Math.floor(Math.random() * array.length)];
   }
 
-  private conductVote(eligibleTargets?: Actor[]): Map<number, number> {
+  private getSuspectForLoyalist(loyalistId: number): number {
+    const activeActors = this.getActiveActors();
+    const validTargets = activeActors.filter(a => a.id !== loyalistId);
+
+    if (validTargets.length === 0) {
+      return VotingGame.NO_VALID_TARGET;
+    }
+
+    // Check if loyalist has an existing suspect
+    const currentSuspect = this.loyalistSuspects.get(loyalistId);
+
+    // If suspect exists and is still in valid targets, keep them
+    if (currentSuspect !== undefined) {
+      const suspectStillActive = validTargets.some(a => a.id === currentSuspect);
+      if (suspectStillActive) {
+        return currentSuspect;
+      }
+    }
+
+    // Otherwise, select a new random suspect
+    const newSuspect = this.randomChoice(validTargets);
+    this.loyalistSuspects.set(loyalistId, newSuspect.id);
+    return newSuspect.id;
+  }
+
+  private conductVote(eligibleTargets: Actor[]): Map<number, number> {
     const votes = new Map<number, number>();
     const activeActors = this.getActiveActors();
-    const targets = eligibleTargets || activeActors;
 
     for (const actor of activeActors) {
-      let validTargets: Actor[];
+      let targetId: number | undefined;
 
-      if (eligibleTargets) {
-        validTargets = eligibleTargets;
+      if (eligibleTargets.length > 0) {
+        // In tie-breaking scenarios, vote randomly from eligible targets
+        const target = this.randomChoice(eligibleTargets);
+        targetId = target.id;
       } else if (actor.type === 'loyalist') {
-        validTargets = activeActors.filter(a => a.id !== actor.id);
+        // Loyalist voting strategy depends on game type
+        if (this.gameType === 'fixate') {
+          const suspectId = this.getSuspectForLoyalist(actor.id);
+          if (suspectId !== VotingGame.NO_VALID_TARGET) {
+            targetId = suspectId;
+          }
+          // If no valid suspect, skip this vote (continue)
+        } else {
+          // Random strategy
+          const validTargets = activeActors.filter(a => a.id !== actor.id);
+          if (validTargets.length > 0) {
+            const target = this.randomChoice(validTargets);
+            targetId = target.id;
+          }
+          // If no valid targets, skip this vote (continue)
+        }
       } else {
-        validTargets = this.getActiveLoyalists();
+        // Traitor strategy (unchanged): vote for loyalists
+        const validTargets = this.getActiveLoyalists();
+        if (validTargets.length > 0) {
+          const target = this.randomChoice(validTargets);
+          targetId = target.id;
+        }
+        // If no valid targets, skip this vote (continue)
       }
 
-      if (validTargets.length > 0) {
-        const target = this.randomChoice(validTargets);
-        votes.set(target.id, (votes.get(target.id) || 0) + 1);
+      if (targetId !== undefined) {
+        votes.set(targetId, (votes.get(targetId) || 0) + 1);
       }
     }
 
@@ -114,7 +147,7 @@ export class VotingGame {
   }
 
   private resolvePhaseOne(): { votes: Map<number, number>; removedId: number } {
-    let votes = this.conductVote();
+    let votes = this.conductVote([]);
     let mostVoted = this.findMostVoted(votes);
     let tieBreakAttempts = 0;
     const MAX_TIE_BREAKS = 10;
@@ -149,7 +182,7 @@ export class VotingGame {
   private isGameOver(): boolean {
     const activeTraitors = this.getActiveTraitors();
     const activeLoyalists = this.getActiveLoyalists();
-    
+
     // This helper only checks whether one side has been completely eliminated.
     // Usage by end condition (see run() method):
     // - 'all_one_type': this directly represents the terminal condition
@@ -161,7 +194,7 @@ export class VotingGame {
   private getOutcome(): 'traitor_removed' | 'no_loyalists' | 'all_loyalists' | 'all_traitors' {
     const activeTraitors = this.getActiveTraitors();
     const activeLoyalists = this.getActiveLoyalists();
-    
+
     if (this.endCondition === 'first_traitor_removed') {
       // In 'first_traitor_removed' mode, the game ends either because
       // all loyalists have been removed or because at least one traitor
@@ -182,7 +215,7 @@ export class VotingGame {
       this.currentRound++;
 
       const phaseOne = this.resolvePhaseOne();
-      
+
       // For 'first_traitor_removed', check if a traitor was just removed
       const removedActor = this.actors.find(a => a.id === phaseOne.removedId);
       if (this.endCondition === 'first_traitor_removed' && removedActor?.type === 'traitor') {
@@ -195,7 +228,7 @@ export class VotingGame {
         });
         break;
       }
-      
+
       // Check if one side has been completely eliminated (applies to both modes)
       if (this.isGameOver()) {
         this.roundHistory.push({
@@ -233,35 +266,10 @@ export class VotingGame {
   }
 }
 
-export type SimulationType = 'random' | 'influence';
-
-export interface SimulationResult {
-  rounds: number;
-  outcome: 'traitor_removed' | 'no_loyalists' | 'all_traitors' | 'all_loyalists';
-}
-
-export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number, type: SimulationType = 'random', endCondition: EndCondition = 'first_traitor_removed'): SimulationResult[] {
-  const results: SimulationResult[] = [];
-  
-  for (let i = 0; i < iterations; i++) {
-    const game = type === 'influence' 
-      ? new InfluenceVotingGame(loyalistCount, traitorCount)
-      : new VotingGame(loyalistCount, traitorCount, endCondition);
-    const result = game.run();
-    results.push({
-      rounds: result.totalRounds,
-      outcome: result.outcome
-    });
-  }
-  
-  return results;
-}
-
-// Influence-based voting game
 export class InfluenceVotingGame {
   private static readonly MAX_INFLUENCE_SCORE = 100;
   private static readonly MIN_INFLUENCE_SCORE = 1;
-  
+
   private actors: Actor[];
   private roundHistory: RoundResult[] = [];
   private currentRound = 0;
@@ -269,7 +277,7 @@ export class InfluenceVotingGame {
 
   constructor(loyalistCount: number, traitorCount: number) {
     this.actors = [];
-    
+
     for (let i = 0; i < loyalistCount; i++) {
       this.actors.push({
         id: i,
@@ -277,7 +285,7 @@ export class InfluenceVotingGame {
         status: 'active'
       });
     }
-    
+
     for (let i = loyalistCount; i < loyalistCount + traitorCount; i++) {
       this.actors.push({
         id: i,
@@ -315,14 +323,14 @@ export class InfluenceVotingGame {
     return this.influenceScores.get(key) || 0;
   }
 
-  private conductVote(eligibleTargets?: Actor[]): Map<number, number> {
+  private conductVote(eligibleTargets: Actor[]): Map<number, number> {
     const votes = new Map<number, number>();
     const activeActors = this.getActiveActors();
 
     for (const actor of activeActors) {
       let validTargets: Actor[];
 
-      if (eligibleTargets) {
+      if (eligibleTargets.length > 0) {
         validTargets = eligibleTargets;
       } else if (actor.type === 'loyalist') {
         validTargets = activeActors.filter(a => a.id !== actor.id);
@@ -372,7 +380,7 @@ export class InfluenceVotingGame {
   }
 
   private resolvePhaseOne(): { votes: Map<number, number>; removedId: number } {
-    let votes = this.conductVote();
+    let votes = this.conductVote([]);
     let mostVoted = this.findMostVoted(votes);
     let tieBreakAttempts = 0;
     const MAX_TIE_BREAKS = 10;
@@ -407,7 +415,7 @@ export class InfluenceVotingGame {
       // Calculate total influence this loyalist has over all other active actors
       let totalInfluence = 0;
       const activeActors = this.getActiveActors();
-      
+
       for (const other of activeActors) {
         if (other.id !== loyalist.id) {
           totalInfluence += this.getInfluence(loyalist.id, other.id);
@@ -430,7 +438,7 @@ export class InfluenceVotingGame {
   private isGameOver(): boolean {
     const activeTraitors = this.getActiveTraitors();
     const activeLoyalists = this.getActiveLoyalists();
-    
+
     return activeTraitors.length === 0 || activeLoyalists.length === 0;
   }
 
@@ -444,7 +452,7 @@ export class InfluenceVotingGame {
       this.currentRound++;
 
       const phaseOne = this.resolvePhaseOne();
-      
+
       if (this.isGameOver()) {
         this.roundHistory.push({
           roundNumber: this.currentRound,
@@ -481,6 +489,25 @@ export class InfluenceVotingGame {
   }
 }
 
+export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number,
+  type: SimulationType, endCondition: EndCondition,
+  gameType: GameType): SimulationResult[] {
+
+  const results: SimulationResult[] = [];
+
+  for (let i = 0; i < iterations; i++) {
+    const game = type === 'influence'
+      ? new InfluenceVotingGame(loyalistCount, traitorCount)
+      : new VotingGame(loyalistCount, traitorCount, endCondition, gameType);
+    const result = game.run();
+    results.push({
+      rounds: result.totalRounds,
+      outcome: result.outcome
+    });
+  }
+
+  return results;
+}
 export function calculateStatistics(results: SimulationResult[]): {
   mean: number;
   median: number;
@@ -497,18 +524,18 @@ export function calculateStatistics(results: SimulationResult[]): {
   const sorted = [...rounds].sort((a, b) => a - b);
   const min = sorted[0];
   const max = sorted[sorted.length - 1];
-  
+
   const mean = rounds.reduce((sum, val) => sum + val, 0) / rounds.length;
-  
+
   const median = sorted.length % 2 === 0
     ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
     : sorted[Math.floor(sorted.length / 2)];
-  
+
   const frequency = new Map<number, number>();
   for (const round of rounds) {
     frequency.set(round, (frequency.get(round) || 0) + 1);
   }
-  
+
   let mode = rounds[0];
   let maxFreq = 0;
   for (const [value, freq] of frequency.entries()) {
@@ -517,9 +544,9 @@ export function calculateStatistics(results: SimulationResult[]): {
       mode = value;
     }
   }
-  
+
   const variance = rounds.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / rounds.length;
   const stdDev = Math.sqrt(variance);
-  
+
   return { mean, median, mode, min, max, stdDev };
 }

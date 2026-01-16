@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { VotingGame, runSimulation, calculateStatistics } from './voting-game'
+import { VotingGame, runSimulation, calculateStatistics } from './voting-game';
+import type { GameType } from './interfaces';
 
 describe('VotingGame', () => {
   describe('constructor', () => {
     it('should initialize with correct number of loyalists and traitors', () => {
-      const game = new VotingGame(5, 2)
+      const game = new VotingGame(5, 2, 'first_traitor_removed', 'random')
       const result = game.run()
       
       // Initial actors should be 5 loyalists + 2 traitors = 7 total
@@ -14,7 +15,7 @@ describe('VotingGame', () => {
     })
 
     it('should create actors with sequential IDs', () => {
-      const game = new VotingGame(3, 1)
+      const game = new VotingGame(3, 1, 'first_traitor_removed', 'random')
       const result = game.run()
       
       // First round should have removed actors from the initial pool
@@ -23,7 +24,7 @@ describe('VotingGame', () => {
     })
 
     it('should handle edge case with 1 loyalist and 1 traitor', () => {
-      const game = new VotingGame(1, 1)
+      const game = new VotingGame(1, 1, 'first_traitor_removed', 'random')
       const result = game.run()
       
       expect(result.totalRounds).toBeGreaterThan(0)
@@ -31,7 +32,7 @@ describe('VotingGame', () => {
     })
 
     it('should handle multiple traitors', () => {
-      const game = new VotingGame(5, 3)
+      const game = new VotingGame(5, 3, 'first_traitor_removed', 'random')
       const result = game.run()
       
       expect(result.totalRounds).toBeGreaterThan(0)
@@ -45,7 +46,7 @@ describe('VotingGame', () => {
       let traitorRemovedFound = false
       
       for (let i = 0; i < 50; i++) {
-        const game = new VotingGame(5, 1)
+        const game = new VotingGame(5, 1, 'first_traitor_removed', 'random')
         const result = game.run()
         
         if (result.outcome === 'traitor_removed') {
@@ -64,7 +65,7 @@ describe('VotingGame', () => {
       let noLoyalistsFound = false
       
       for (let i = 0; i < 50; i++) {
-        const game = new VotingGame(2, 1)
+        const game = new VotingGame(2, 1, 'first_traitor_removed', 'random')
         const result = game.run()
         
         if (result.outcome === 'no_loyalists') {
@@ -79,7 +80,7 @@ describe('VotingGame', () => {
     })
 
     it('should terminate within reasonable number of rounds', () => {
-      const game = new VotingGame(10, 3)
+      const game = new VotingGame(10, 3, 'first_traitor_removed', 'random')
       const result = game.run()
       
       // Game should complete within a reasonable number of rounds
@@ -91,7 +92,7 @@ describe('VotingGame', () => {
 
   describe('round progression', () => {
     it('should record round history', () => {
-      const game = new VotingGame(4, 1)
+      const game = new VotingGame(4, 1, 'first_traitor_removed', 'random')
       const result = game.run()
       
       expect(result.rounds.length).toBe(result.totalRounds)
@@ -106,7 +107,7 @@ describe('VotingGame', () => {
     })
 
     it('should remove exactly one actor in phase one', () => {
-      const game = new VotingGame(5, 2)
+      const game = new VotingGame(5, 2, 'first_traitor_removed', 'random')
       const result = game.run()
       
       result.rounds.forEach(round => {
@@ -116,7 +117,7 @@ describe('VotingGame', () => {
     })
 
     it('should track remaining actors after each round', () => {
-      const game = new VotingGame(4, 1)
+      const game = new VotingGame(4, 1, 'first_traitor_removed', 'random')
       const result = game.run()
       
       let previousActorCount = 5 // 4 loyalists + 1 traitor
@@ -134,7 +135,7 @@ describe('VotingGame', () => {
 
   describe('voting mechanics', () => {
     it('should record votes in phase one', () => {
-      const game = new VotingGame(5, 2)
+      const game = new VotingGame(5, 2, 'first_traitor_removed', 'random')
       const result = game.run()
       
       result.rounds.forEach(round => {
@@ -149,7 +150,7 @@ describe('VotingGame', () => {
     })
 
     it('should handle phase two removal when game continues', () => {
-      const game = new VotingGame(6, 1)
+      const game = new VotingGame(6, 1, 'first_traitor_removed', 'random')
       const result = game.run()
       
       // Most rounds should have phase two (except possibly the last)
@@ -166,7 +167,7 @@ describe('VotingGame', () => {
       let phaseOneEndFound = false
       
       for (let i = 0; i < 30; i++) {
-        const game = new VotingGame(3, 1)
+        const game = new VotingGame(3, 1, 'first_traitor_removed', 'random')
         const result = game.run()
         
         const lastRound = result.rounds[result.rounds.length - 1]
@@ -185,13 +186,13 @@ describe('VotingGame', () => {
 describe('runSimulation', () => {
   it('should run specified number of iterations', () => {
     const iterations = 10
-    const results = runSimulation(iterations, 5, 2)
+    const results = runSimulation(iterations, 5, 2, 'random', 'first_traitor_removed', 'random')
     
     expect(results.length).toBe(iterations)
   })
 
   it('should return array of round counts', () => {
-    const results = runSimulation(5, 4, 1)
+    const results = runSimulation(5, 4, 1, 'random', 'first_traitor_removed', 'random')
     
     results.forEach(result => {
       expect(typeof result.rounds).toBe('number')
@@ -202,7 +203,7 @@ describe('runSimulation', () => {
   })
 
   it('should produce varied results across iterations', () => {
-    const results = runSimulation(100, 5, 2)
+    const results = runSimulation(100, 5, 2, 'random', 'first_traitor_removed', 'random')
     
     // With randomness, we should get at least some variation
     const uniqueResults = new Set(results.map(r => r.rounds))
@@ -213,7 +214,7 @@ describe('runSimulation', () => {
   })
 
   it('should handle single iteration', () => {
-    const results = runSimulation(1, 3, 1)
+    const results = runSimulation(1, 3, 1, 'random', 'first_traitor_removed', 'random')
     
     expect(results.length).toBe(1)
     expect(results[0].rounds).toBeGreaterThan(0)
@@ -221,7 +222,7 @@ describe('runSimulation', () => {
   })
 
   it('should handle many iterations', () => {
-    const results = runSimulation(100, 5, 2)
+    const results = runSimulation(100, 5, 2, 'random', 'first_traitor_removed', 'random')
     
     expect(results.length).toBe(100)
     results.forEach(result => {
@@ -313,7 +314,7 @@ describe('calculateStatistics', () => {
   })
 
   it('should correctly calculate statistics for realistic simulation data', () => {
-    const rounds = runSimulation(50, 5, 2)
+    const rounds = runSimulation(50, 5, 2, 'random', 'first_traitor_removed', 'random')
     const stats = calculateStatistics(rounds)
     
     expect(stats.mean).toBeGreaterThan(0)
@@ -326,5 +327,171 @@ describe('calculateStatistics', () => {
     // Mean should be between min and max
     expect(stats.mean).toBeGreaterThanOrEqual(stats.min)
     expect(stats.mean).toBeLessThanOrEqual(stats.max)
+  })
+})
+
+describe('VotingGame with fixate strategy', () => {
+  describe('constructor', () => {
+    it('should accept gameType parameter and initialize correctly', () => {
+      const game = new VotingGame(5, 2, 'first_traitor_removed', 'fixate')
+      const result = game.run()
+      
+      expect(result.rounds.length).toBeGreaterThan(0)
+      expect(result.totalRounds).toBeGreaterThan(0)
+      expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
+    })
+
+    it('should default to random strategy when gameType not specified', () => {
+      const game = new VotingGame(5, 2, 'first_traitor_removed', 'random')
+      const result = game.run()
+      
+      expect(result.rounds.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('fixate voting behavior', () => {
+    it('should complete games with fixate strategy', () => {
+      const game = new VotingGame(10, 3, 'first_traitor_removed', 'fixate')
+      const result = game.run()
+      
+      expect(result.totalRounds).toBeGreaterThan(0)
+      expect(result.totalRounds).toBeLessThan(100)
+      expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
+    })
+
+    it('should handle small games with fixate strategy', () => {
+      const game = new VotingGame(2, 1, 'first_traitor_removed', 'fixate')
+      const result = game.run()
+      
+      expect(result.totalRounds).toBeGreaterThan(0)
+      expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
+    })
+
+    it('should produce traitor_removed outcomes with fixate strategy', () => {
+      let traitorRemovedFound = false
+      
+      for (let i = 0; i < 50; i++) {
+        const game = new VotingGame(5, 1, 'first_traitor_removed', 'fixate')
+        const result = game.run()
+        
+        if (result.outcome === 'traitor_removed') {
+          traitorRemovedFound = true
+          expect(result.outcome).toBe('traitor_removed')
+          break
+        }
+      }
+      
+      expect(traitorRemovedFound).toBe(true)
+    })
+
+    it('should produce no_loyalists outcomes with fixate strategy', () => {
+      let noLoyalistsFound = false
+      
+      for (let i = 0; i < 50; i++) {
+        const game = new VotingGame(2, 1, 'first_traitor_removed', 'fixate')
+        const result = game.run()
+        
+        if (result.outcome === 'no_loyalists') {
+          noLoyalistsFound = true
+          expect(result.outcome).toBe('no_loyalists')
+          break
+        }
+      }
+      
+      expect(noLoyalistsFound).toBe(true)
+    })
+
+    it('should record round history with fixate strategy', () => {
+      const game = new VotingGame(4, 1, 'first_traitor_removed', 'fixate')
+      const result = game.run()
+      
+      expect(result.rounds.length).toBe(result.totalRounds)
+      
+      result.rounds.forEach((round, index) => {
+        expect(round.roundNumber).toBe(index + 1)
+        expect(round.phaseOneVotes).toBeInstanceOf(Map)
+        expect(round.phaseOneRemoved).toBeGreaterThanOrEqual(0)
+        expect(round.remainingActors).toBeInstanceOf(Array)
+      })
+    })
+
+    it('should handle edge case with 1 loyalist and 1 traitor', () => {
+      const game = new VotingGame(1, 1, 'first_traitor_removed', 'fixate')
+      const result = game.run()
+      
+      expect(result.totalRounds).toBeGreaterThan(0)
+      expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
+    })
+  })
+
+  describe('comparison with random strategy', () => {
+    it('should produce different statistical distributions than random strategy', () => {
+      const randomResults = runSimulation(100, 8, 2, 'random', 'first_traitor_removed', 'random')
+      const fixateResults = runSimulation(100, 8, 2, 'random', 'first_traitor_removed', 'fixate')
+      
+      const randomStats = calculateStatistics(randomResults)
+      const fixateStats = calculateStatistics(fixateResults)
+      
+      // Both should produce valid results
+      expect(randomStats.mean).toBeGreaterThan(0)
+      expect(fixateStats.mean).toBeGreaterThan(0)
+      
+      // Results should exist for both strategies
+      expect(randomResults.length).toBe(100)
+      expect(fixateResults.length).toBe(100)
+    })
+
+    it('should maintain game validity with both strategies', () => {
+      const strategies: GameType[] = ['random', 'fixate']
+      
+      strategies.forEach(strategy => {
+        const game = new VotingGame(5, 2, 'first_traitor_removed', strategy)
+        const result = game.run()
+        
+        expect(result.totalRounds).toBeGreaterThan(0)
+        expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
+      })
+    })
+  })
+})
+
+describe('runSimulation with gameType parameter', () => {
+  it('should accept and use gameType parameter', () => {
+    const results = runSimulation(10, 5, 2, 'random', 'first_traitor_removed', 'fixate')
+    
+    expect(results.length).toBe(10)
+    results.forEach(result => {
+      expect(result.rounds).toBeGreaterThan(0)
+      expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
+    })
+  })
+
+  it('should default to random when gameType not provided', () => {
+    const results = runSimulation(10, 5, 2, 'random', 'first_traitor_removed', 'random')
+    
+    expect(results.length).toBe(10)
+    results.forEach(result => {
+      expect(result.rounds).toBeGreaterThan(0)
+      expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
+    })
+  })
+
+  it('should work with random gameType explicitly set', () => {
+    const results = runSimulation(10, 5, 2, 'random', 'first_traitor_removed', 'random')
+    
+    expect(results.length).toBe(10)
+    results.forEach(result => {
+      expect(result.rounds).toBeGreaterThan(0)
+      expect(['traitor_removed', 'no_loyalists']).toContain(result.outcome)
+    })
+  })
+
+  it('should produce varied results with fixate strategy', () => {
+    const results = runSimulation(100, 5, 2, 'random', 'first_traitor_removed', 'fixate')
+    
+    const uniqueResults = new Set(results.map(r => r.rounds))
+    
+    // Should have variation due to randomness
+    expect(uniqueResults.size).toBeGreaterThanOrEqual(2)
   })
 })

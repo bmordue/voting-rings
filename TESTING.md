@@ -88,7 +88,7 @@ import { VotingGame } from '../lib/voting-game'
 
 describe('VotingGame', () => {
   it('should initialize with correct number of actors', () => {
-    const game = new VotingGame(5, 2)
+    const game = new VotingGame(5, 2, 'first_traitor_removed', 'random')
     const result = game.run()
     
     expect(result.rounds.length).toBeGreaterThan(0)
