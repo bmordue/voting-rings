@@ -1,33 +1,15 @@
-export type ActorType = 'loyalist' | 'traitor';
-export type ActorStatus = 'active' | 'removed';
-export type GameType = 'random' | 'fixate';
-export type EndCondition = 'first_traitor_removed' | 'all_one_type';
-
-export interface Actor {
-  id: number;
-  type: ActorType;
-  status: ActorStatus;
-}
-
-export interface VoteResult {
-  targetId: number;
-  votes: number;
-}
-
-export interface RoundResult {
-  roundNumber: number;
-  phaseOneVotes: Map<number, number>;
-  phaseOneRemoved: number;
-  phaseTwoRemoved: number;
-  remainingActors: Actor[];
-}
-
-export interface GameResult {
-  rounds: RoundResult[];
-  totalRounds: number;
-  outcome: 'traitor_removed' | 'no_loyalists' | 'all_loyalists' | 'all_traitors';
-  endCondition: EndCondition;
-}
+import {
+  Actor,
+  ActorType,
+  ActorStatus,
+  GameType,
+  EndCondition,
+  VoteResult,
+  RoundResult,
+  GameResult,
+  SimulationType,
+  SimulationResult
+} from './interfaces';
 
 export class VotingGame {
   private actors: Actor[];
@@ -285,9 +267,6 @@ export class VotingGame {
   }
 }
 
-export type SimulationType = 'random' | 'influence';
-
-// Influence-based voting game
 export class InfluenceVotingGame {
   private static readonly MAX_INFLUENCE_SCORE = 100;
   private static readonly MIN_INFLUENCE_SCORE = 1;
@@ -510,12 +489,6 @@ export class InfluenceVotingGame {
     };
   }
 }
-
-export interface SimulationResult {
-  rounds: number;
-  outcome: 'traitor_removed' | 'no_loyalists' | 'all_traitors' | 'all_loyalists';
-}
-
 
 export function runSimulation(iterations: number, loyalistCount: number, traitorCount: number,
   type: SimulationType = 'random', endCondition: EndCondition = 'first_traitor_removed',

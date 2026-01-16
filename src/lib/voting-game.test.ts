@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { VotingGame, runSimulation, calculateStatistics, type GameType } from './voting-game'
+import { VotingGame, runSimulation, calculateStatistics } from './voting-game';
+import type { GameType } from './interfaces';
 
 describe('VotingGame', () => {
   describe('constructor', () => {

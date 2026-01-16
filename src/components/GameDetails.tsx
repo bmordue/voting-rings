@@ -1,4 +1,4 @@
-import { GameResult, Actor } from '@/lib/voting-game';
+import type { GameResult, Actor } from '@/lib/interfaces';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
