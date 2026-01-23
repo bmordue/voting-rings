@@ -67,6 +67,37 @@ npm run dev
 
 The application will be available at `http://localhost:5173`
 
+## Deployment
+
+This project is configured for deployment on Vercel. The configuration in `vercel.json` ensures proper building and routing for the single-page application.
+
+### Vercel Deployment
+
+When you connect this repository to Vercel:
+- **Production deployments** are automatically created for pushes to the `main` branch
+- **Preview deployments** are automatically created for all pull requests
+- Each deployment uses the build configuration specified in `vercel.json`
+
+The build process:
+1. Runs `npm install` to install dependencies
+2. Executes `npm run build` to create the production build
+3. Serves the static files from the `dist/` directory
+
+### Manual Deployment
+
+To deploy manually to Vercel:
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy to preview
+vercel
+
+# Deploy to production
+vercel --prod
+```
+
 ### Nix Setup (Optional)
 
 For a reproducible development environment, you can use Nix:
