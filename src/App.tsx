@@ -13,7 +13,7 @@ import { GameDetails } from '@/components/GameDetails';
 import { GameList } from '@/components/GameList';
 import { VotingGame, InfluenceVotingGame, runSimulation, calculateStatistics } from '@/lib/voting-game';
 import type { EndCondition, SimulationType, GameResult, GameType } from '@/lib/interfaces';
-import { Play, ChartBar, Eye, ArrowClockwise, Info } from '@phosphor-icons/react';
+import { Play, BarChart3, Eye, RotateCw, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 function App() {
@@ -234,12 +234,12 @@ function App() {
                   disabled={isRunning}
                   className="flex-1"
                 >
-                  <Play size={18} weight="fill" className="mr-2" />
+                  <Play size={18} className="mr-2" />
                   {isRunning ? 'Running...' : 'Run Simulation'}
                 </Button>
                 {results.length > 0 && (
                   <Button onClick={handleReset} variant="outline">
-                    <ArrowClockwise size={18} />
+                    <RotateCw size={18} />
                   </Button>
                 )}
               </div>
@@ -260,7 +260,7 @@ function App() {
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ChartBar size={20} />
+                  <BarChart3 size={20} />
                   Statistics
                 </CardTitle>
                 <CardDescription>Summary of {results.length.toLocaleString()} simulations</CardDescription>
@@ -323,7 +323,7 @@ function App() {
               <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="mb-4">
                   <TabsTrigger value="overview">
-                    <ChartBar size={16} className="mr-2" />
+                    <BarChart3 size={16} className="mr-2" />
                     Overview
                   </TabsTrigger>
                   <TabsTrigger value="all-games">

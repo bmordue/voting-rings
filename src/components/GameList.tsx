@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CaretLeft, CaretRight, CaretDoubleLeft, CaretDoubleRight, ArrowUp, ArrowDown } from '@phosphor-icons/react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface GameListProps {
   games: GameResult[];
@@ -260,7 +260,7 @@ export function GameList({ games, onSelectGame }: GameListProps) {
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
             >
-              <CaretDoubleLeft size={16} />
+              <ChevronsLeft size={16} />
             </Button>
             <Button
               variant="outline"
@@ -268,7 +268,7 @@ export function GameList({ games, onSelectGame }: GameListProps) {
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
             >
-              <CaretLeft size={16} />
+              <ChevronLeft size={16} />
             </Button>
             <span className="text-sm" style={{ fontFamily: 'var(--font-mono)' }}>
               {currentPage} / {totalPages}
@@ -279,7 +279,7 @@ export function GameList({ games, onSelectGame }: GameListProps) {
               onClick={() => setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
             >
-              <CaretRight size={16} />
+              <ChevronRight size={16} />
             </Button>
             <Button
               variant="outline"
@@ -287,7 +287,7 @@ export function GameList({ games, onSelectGame }: GameListProps) {
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages}
             >
-              <CaretDoubleRight size={16} />
+              <ChevronsRight size={16} />
             </Button>
           </div>
         </div>
