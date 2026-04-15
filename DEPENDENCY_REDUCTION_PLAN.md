@@ -42,7 +42,7 @@ These packages are declared in `package.json` but never imported anywhere in the
 | Package | Why it's here | Action |
 |---|---|---|
 | `@tailwindcss/postcss` | Template scaffold — Tailwind v4 uses Vite plugin | **Remove** |
-| `@vitest/coverage-v8` | Only needed if running coverage CI | **Remove** (or keep if coverage is planned) |
+| @vitest/coverage-v8 | Required for coverage reporting | **Keep** — currently configured in vitest.config.ts |
 | `@vitest/ui` | Only needed for `test:ui` — low value | **Remove** |
 | `eslint` + plugins | Currently configured but lint not enforced in CI | **Remove** (or keep if linting will be enforced) |
 | `globals` | ESLint transitive — unused without ESLint | **Remove** |
@@ -84,7 +84,6 @@ pagination.tsx
 popover.tsx
 radio-group.tsx
 resizable.tsx
-sonner.tsx
 switch.tsx
 toggle-group.tsx
 toggle.tsx
@@ -164,16 +163,16 @@ Review these packages to confirm they are still needed:
 
 | Package | Current Use | Question |
 |---|---|---|
-| `d3` | Histogram.tsx | Is the histogram feature actively used? If not, remove d3 (~180KB minified) |
+| d3 | Histogram.tsx | **Keep** — used to render the simulation results histogram |
 | `recharts` | chart.tsx (unused component) | If chart component is deleted in Phase 2, remove recharts |
 | `react-day-picker` | calendar.tsx (unused component) | Delete with calendar component |
 | `vaul` | drawer.tsx (unused component) | Delete with drawer component |
 | `cmdk` | command.tsx (unused component) | Delete with command component |
 | `input-otp` | input-otp.tsx (unused component) | Delete with input-otp component |
 | `react-resizable-panels` | resizable.tsx (unused component) | Delete with resizable component |
-| `next-themes` | sonner.tsx (unused component) | Delete with sonner component |
+| next-themes | sonner.tsx | **Keep** — required for theme-aware notifications |
 | `react-error-boundary` | main.tsx | Keep — provides error boundary in app entry |
-| `sonner` | sonner.tsx (unused) + App.tsx toast imports | Check if toasts are actually triggered in App.tsx |
+| sonner | App.tsx + main.tsx | **Keep** — used for user feedback throughout the app |
 
 ---
 
