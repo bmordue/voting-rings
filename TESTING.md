@@ -27,11 +27,6 @@ npm test
 npm run test:run
 ```
 
-### Run tests with UI
-```bash
-npm run test:ui
-```
-
 ### Generate coverage report
 ```bash
 npm run coverage

@@ -1,68 +1,5 @@
 @import "tailwindcss";
 
-@import '@radix-ui/colors/sage-dark.css' layer(base);
-@import '@radix-ui/colors/olive.css' layer(base);
-@import '@radix-ui/colors/olive-dark.css' layer(base);
-@import '@radix-ui/colors/sand.css' layer(base);
-@import '@radix-ui/colors/sand-dark.css' layer(base);
-@import '@radix-ui/colors/red.css' layer(base);
-@import '@radix-ui/colors/red-dark.css' layer(base);
-@import '@radix-ui/colors/ruby.css' layer(base);
-@import '@radix-ui/colors/ruby-dark.css' layer(base);
-@import '@radix-ui/colors/crimson.css' layer(base);
-@import '@radix-ui/colors/crimson-dark.css' layer(base);
-@import '@radix-ui/colors/pink.css' layer(base);
-@import '@radix-ui/colors/pink-dark.css' layer(base);
-@import '@radix-ui/colors/plum.css' layer(base);
-@import '@radix-ui/colors/plum-dark.css' layer(base);
-@import '@radix-ui/colors/purple.css' layer(base);
-@import '@radix-ui/colors/purple-dark.css' layer(base);
-@import '@radix-ui/colors/violet.css' layer(base);
-@import '@radix-ui/colors/violet-dark.css' layer(base);
-@import '@radix-ui/colors/iris.css' layer(base);
-@import '@radix-ui/colors/iris-dark.css' layer(base);
-@import '@radix-ui/colors/indigo.css' layer(base);
-@import '@radix-ui/colors/indigo-dark.css' layer(base);
-@import '@radix-ui/colors/blue.css' layer(base);
-@import '@radix-ui/colors/blue-dark.css' layer(base);
-@import '@radix-ui/colors/cyan.css' layer(base);
-@import '@radix-ui/colors/cyan-dark.css' layer(base);
-@import '@radix-ui/colors/teal.css' layer(base);
-@import '@radix-ui/colors/teal-dark.css' layer(base);
-@import '@radix-ui/colors/jade.css' layer(base);
-@import '@radix-ui/colors/jade-dark.css' layer(base);
-@import '@radix-ui/colors/green.css' layer(base);
-@import '@radix-ui/colors/green-dark.css' layer(base);
-@import '@radix-ui/colors/grass.css' layer(base);
-@import '@radix-ui/colors/grass-dark.css' layer(base);
-@import '@radix-ui/colors/bronze.css' layer(base);
-@import '@radix-ui/colors/bronze-dark.css' layer(base);
-@import '@radix-ui/colors/gold.css' layer(base);
-@import '@radix-ui/colors/gold-dark.css' layer(base);
-@import '@radix-ui/colors/brown.css' layer(base);
-@import '@radix-ui/colors/brown-dark.css' layer(base);
-@import '@radix-ui/colors/orange.css' layer(base);
-@import '@radix-ui/colors/orange-dark.css' layer(base);
-@import '@radix-ui/colors/amber.css' layer(base);
-@import '@radix-ui/colors/amber-dark.css' layer(base);
-@import '@radix-ui/colors/yellow.css' layer(base);
-@import '@radix-ui/colors/yellow-dark.css' layer(base);
-@import '@radix-ui/colors/lime.css' layer(base);
-@import '@radix-ui/colors/lime-dark.css' layer(base);
-@import '@radix-ui/colors/mint.css' layer(base);
-@import '@radix-ui/colors/mint-dark.css' layer(base);
-@import '@radix-ui/colors/sky.css' layer(base);
-@import '@radix-ui/colors/sky-dark.css' layer(base);
-@import '@radix-ui/colors/tomato.css' layer(base);
-@import '@radix-ui/colors/tomato-dark.css' layer(base);
-@import '@radix-ui/colors/gray.css' layer(base);
-@import '@radix-ui/colors/gray-dark.css' layer(base);
-@import '@radix-ui/colors/mauve.css' layer(base);
-@import '@radix-ui/colors/mauve-dark.css' layer(base);
-@import '@radix-ui/colors/slate.css' layer(base);
-@import '@radix-ui/colors/slate-dark.css' layer(base);
-@import '@radix-ui/colors/slate-alpha.css' layer(base);
-@import '@radix-ui/colors/slate-dark-alpha.css' layer(base);
 
 @import 'tailwindcss/theme' layer(theme);
 
@@ -88,38 +25,6 @@
 
 @layer base {
   #spark-app {
-    --tomato-contrast: #fff;
-    --red-contrast: #fff;
-    --ruby-contrast: #fff;
-    --crimson-contrast: #fff;
-    --pink-contrast: #fff;
-    --plum-contrast: #fff;
-    --purple-contrast: #fff;
-    --violet-contrast: #fff;
-    --iris-contrast: #fff;
-    --indigo-contrast: #fff;
-    --blue-contrast: #fff;
-    --cyan-contrast: #fff;
-    --teal-contrast: #fff;
-    --jade-contrast: #fff;
-    --green-contrast: #fff;
-    --grass-contrast: #fff;
-    --bronze-contrast: #fff;
-    --gold-contrast: #fff;
-    --brown-contrast: #fff;
-    --orange-contrast: #fff;
-    --amber-contrast: #000;
-    --yellow-contrast: #000;
-    --lime-contrast: #000;
-    --mint-contrast: #000;
-    --sky-contrast: #000;
-    --gray-contrast: #fff;
-    --mauve-contrast: #fff;
-    --slate-contrast: #fff;
-    --sage-contrast: #fff;
-    --olive-contrast: #fff;
-    --sand-contrast: #fff;
-
     /**
    * Spacing scale
    *
@@ -176,62 +81,62 @@
     --radius-2xl: calc(16px * var(--radius-factor) * var(--size-scale));
     --radius-full: 9999px;
 
-    /* Neutral colors */
-    --color-neutral-1: var(--slate-1);
-    --color-neutral-2: var(--slate-2);
-    --color-neutral-3: var(--slate-3);
-    --color-neutral-4: var(--slate-4);
-    --color-neutral-5: var(--slate-5);
-    --color-neutral-6: var(--slate-6);
-    --color-neutral-7: var(--slate-7);
-    --color-neutral-8: var(--slate-8);
-    --color-neutral-9: var(--slate-9);
-    --color-neutral-10: var(--slate-10);
-    --color-neutral-11: var(--slate-11);
-    --color-neutral-12: var(--slate-12);
-    --color-neutral-a1: var(--slate-a1);
-    --color-neutral-a2: var(--slate-a2);
-    --color-neutral-a3: var(--slate-a3);
-    --color-neutral-a4: var(--slate-a4);
-    --color-neutral-a5: var(--slate-a5);
-    --color-neutral-a6: var(--slate-a6);
-    --color-neutral-a7: var(--slate-a7);
-    --color-neutral-a8: var(--slate-a8);
-    --color-neutral-a9: var(--slate-a9);
-    --color-neutral-a10: var(--slate-a10);
-    --color-neutral-a11: var(--slate-a11);
-    --color-neutral-a12: var(--slate-a12);
-    --color-neutral-contrast: var(--slate-contrast);
+    /* Neutral colors (slate, light mode) */
+    --color-neutral-1: #fcfcfd;
+    --color-neutral-2: #f9f9fb;
+    --color-neutral-3: #f0f0f3;
+    --color-neutral-4: #e8e8ec;
+    --color-neutral-5: #e0e1e6;
+    --color-neutral-6: #d9d9e0;
+    --color-neutral-7: #cdced6;
+    --color-neutral-8: #b9bbc6;
+    --color-neutral-9: #8b8d98;
+    --color-neutral-10: #80838d;
+    --color-neutral-11: #60646c;
+    --color-neutral-12: #1c2024;
+    --color-neutral-a1: #00005503;
+    --color-neutral-a2: #00005506;
+    --color-neutral-a3: #0000330f;
+    --color-neutral-a4: #00002d17;
+    --color-neutral-a5: #0009321f;
+    --color-neutral-a6: #00002f26;
+    --color-neutral-a7: #00062e32;
+    --color-neutral-a8: #00083046;
+    --color-neutral-a9: #00051d74;
+    --color-neutral-a10: #00071b7f;
+    --color-neutral-a11: #0007149f;
+    --color-neutral-a12: #000509e3;
+    --color-neutral-contrast: #fff;
 
-    /* Accent colors */
-    --color-accent-1: var(--blue-1);
-    --color-accent-2: var(--blue-2);
-    --color-accent-3: var(--blue-3);
-    --color-accent-4: var(--blue-4);
-    --color-accent-5: var(--blue-5);
-    --color-accent-6: var(--blue-6);
-    --color-accent-7: var(--blue-7);
-    --color-accent-8: var(--blue-8);
-    --color-accent-9: var(--blue-9);
-    --color-accent-10: var(--blue-10);
-    --color-accent-11: var(--blue-11);
-    --color-accent-12: var(--blue-12);
-    --color-accent-contrast: var(--blue-contrast);
+    /* Accent colors (blue, light mode) */
+    --color-accent-1: #fbfdff;
+    --color-accent-2: #f4faff;
+    --color-accent-3: #e6f4fe;
+    --color-accent-4: #d5efff;
+    --color-accent-5: #c2e5ff;
+    --color-accent-6: #acd8fc;
+    --color-accent-7: #8ec8f6;
+    --color-accent-8: #5eb1ef;
+    --color-accent-9: #0090ff;
+    --color-accent-10: #0588f0;
+    --color-accent-11: #0d74ce;
+    --color-accent-12: #113264;
+    --color-accent-contrast: #fff;
 
-    /* Secondary accent colors */
-    --color-accent-secondary-1: var(--violet-1);
-    --color-accent-secondary-2: var(--violet-2);
-    --color-accent-secondary-3: var(--violet-3);
-    --color-accent-secondary-4: var(--violet-4);
-    --color-accent-secondary-5: var(--violet-5);
-    --color-accent-secondary-6: var(--violet-6);
-    --color-accent-secondary-7: var(--violet-7);
-    --color-accent-secondary-8: var(--violet-8);
-    --color-accent-secondary-9: var(--violet-9);
-    --color-accent-secondary-10: var(--violet-10);
-    --color-accent-secondary-11: var(--violet-11);
-    --color-accent-secondary-12: var(--violet-12);
-    --color-accent-secondary-contrast: var(--violet-contrast);
+    /* Secondary accent colors (violet, light mode) */
+    --color-accent-secondary-1: #fdfcfe;
+    --color-accent-secondary-2: #faf8ff;
+    --color-accent-secondary-3: #f4f0fe;
+    --color-accent-secondary-4: #ebe4ff;
+    --color-accent-secondary-5: #e1d9ff;
+    --color-accent-secondary-6: #d4cafe;
+    --color-accent-secondary-7: #c2b5f5;
+    --color-accent-secondary-8: #aa99ec;
+    --color-accent-secondary-9: #6e56cf;
+    --color-accent-secondary-10: #654dc4;
+    --color-accent-secondary-11: #6550b9;
+    --color-accent-secondary-12: #2f265f;
+    --color-accent-secondary-contrast: #fff;
 
     /* Foreground colors */
     --color-fg: var(--color-neutral-12);
@@ -258,5 +163,62 @@
     --color-bg: var(--color-neutral-1);
     --color-bg-inset: #000000;
     --color-bg-overlay: var(--color-neutral-3);
+
+    /* Neutral colors (slate, dark mode) */
+    --color-neutral-1: #111113;
+    --color-neutral-2: #18191b;
+    --color-neutral-3: #212225;
+    --color-neutral-4: #272a2d;
+    --color-neutral-5: #2e3135;
+    --color-neutral-6: #363a3f;
+    --color-neutral-7: #43484e;
+    --color-neutral-8: #5a6169;
+    --color-neutral-9: #696e77;
+    --color-neutral-10: #777b84;
+    --color-neutral-11: #b0b4ba;
+    --color-neutral-12: #edeef0;
+    --color-neutral-a1: #00000000;
+    --color-neutral-a2: #d8f4f609;
+    --color-neutral-a3: #ddeaf814;
+    --color-neutral-a4: #d3edf81d;
+    --color-neutral-a5: #d9edfe25;
+    --color-neutral-a6: #d6ebfd30;
+    --color-neutral-a7: #d9edff40;
+    --color-neutral-a8: #d9edff5d;
+    --color-neutral-a9: #dfebfd6d;
+    --color-neutral-a10: #e5edfd7b;
+    --color-neutral-a11: #f1f7feb5;
+    --color-neutral-a12: #fcfdffef;
+    --color-neutral-contrast: #fff;
+
+    /* Accent colors (blue, dark mode) */
+    --color-accent-1: #0d1520;
+    --color-accent-2: #111927;
+    --color-accent-3: #0d2847;
+    --color-accent-4: #003362;
+    --color-accent-5: #004074;
+    --color-accent-6: #104d87;
+    --color-accent-7: #205d9e;
+    --color-accent-8: #2870bd;
+    --color-accent-9: #0090ff;
+    --color-accent-10: #3b9eff;
+    --color-accent-11: #70b8ff;
+    --color-accent-12: #c2e6ff;
+    --color-accent-contrast: #fff;
+
+    /* Secondary accent colors (violet, dark mode) */
+    --color-accent-secondary-1: #14121f;
+    --color-accent-secondary-2: #1b1525;
+    --color-accent-secondary-3: #291f43;
+    --color-accent-secondary-4: #33255b;
+    --color-accent-secondary-5: #3c2e69;
+    --color-accent-secondary-6: #473876;
+    --color-accent-secondary-7: #56468b;
+    --color-accent-secondary-8: #6958ad;
+    --color-accent-secondary-9: #6e56cf;
+    --color-accent-secondary-10: #7d66d9;
+    --color-accent-secondary-11: #baa7ff;
+    --color-accent-secondary-12: #e2ddfe;
+    --color-accent-secondary-contrast: #fff;
   }
 }
