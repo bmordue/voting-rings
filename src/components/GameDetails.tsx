@@ -1,7 +1,4 @@
-import type { GameResult, Actor } from '@/lib/interfaces';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import type { GameResult } from '@/lib/interfaces';
 
 interface GameDetailsProps {
   game: GameResult;
@@ -13,13 +10,13 @@ export function GameDetails({ game, initialLoyalists, initialTraitors }: GameDet
   const getActorBadge = (actorId: number) => {
     const isTraitor = actorId >= initialLoyalists;
     return isTraitor ? (
-      <Badge className="bg-traitor text-traitor-foreground hover:bg-traitor">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: 'var(--traitor)' }}>
         Traitor #{actorId - initialLoyalists + 1}
-      </Badge>
+      </span>
     ) : (
-      <Badge className="bg-loyalist text-loyalist-foreground hover:bg-loyalist">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: 'var(--loyalist)' }}>
         Loyalist #{actorId + 1}
-      </Badge>
+      </span>
     );
   };
 
@@ -30,27 +27,27 @@ export function GameDetails({ game, initialLoyalists, initialTraitors }: GameDet
           Game Summary
         </h3>
         <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4">
+          <div className="p-4 rounded-xl border">
             <div className="text-sm text-muted-foreground">Total Rounds</div>
             <div className="text-3xl font-bold mt-1" style={{ fontFamily: 'var(--font-mono)' }}>
               {game.totalRounds}
             </div>
-          </Card>
-          <Card className="p-4">
+          </div>
+          <div className="p-4 rounded-xl border">
             <div className="text-sm text-muted-foreground">Outcome</div>
             <div className="text-lg font-semibold mt-1">
               {{
-                'traitor_removed': <span className="text-loyalist">First Traitor Removed</span>,
-                'all_loyalists': <span className="text-loyalist">All Loyalists Remaining</span>,
-                'no_loyalists': <span className="text-traitor">No Loyalists Left</span>,
-                'all_traitors': <span className="text-traitor">All Traitors Remaining</span>
+                'traitor_removed': <span style={{ color: 'var(--loyalist)' }}>First Traitor Removed</span>,
+                'all_loyalists': <span style={{ color: 'var(--loyalist)' }}>All Loyalists Remaining</span>,
+                'no_loyalists': <span style={{ color: 'var(--traitor)' }}>No Loyalists Left</span>,
+                'all_traitors': <span style={{ color: 'var(--traitor)' }}>All Traitors Remaining</span>
               }[game.outcome]}
             </div>
-          </Card>
+          </div>
         </div>
       </div>
 
-      <Separator />
+      <hr className="border-border" />
 
       <div>
         <h3 className="text-xl font-semibold mb-4" style={{ fontFamily: 'var(--font-heading)' }}>
@@ -58,7 +55,7 @@ export function GameDetails({ game, initialLoyalists, initialTraitors }: GameDet
         </h3>
         <div className="space-y-4">
           {game.rounds.map((round) => (
-            <Card key={round.roundNumber} className="p-4">
+            <div key={round.roundNumber} className="p-4 rounded-xl border">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
                   Round {round.roundNumber}
@@ -72,12 +69,11 @@ export function GameDetails({ game, initialLoyalists, initialTraitors }: GameDet
                 <div>
                   <div className="text-sm font-medium mb-2 text-muted-foreground">Phase 1: Voting Results</div>
                   
-                  {/* Vote breakdown */}
                   {round.phaseOneVotes.size > 0 && (
                     <div className="space-y-1 mb-3 p-3 bg-muted/30 rounded-md">
                       <div className="text-xs font-semibold text-muted-foreground mb-2">Vote Distribution</div>
                       {Array.from(round.phaseOneVotes.entries())
-                        .sort((a, b) => b[1] - a[1]) // Sort by vote count descending
+                        .sort((a, b) => b[1] - a[1])
                         .map(([actorId, voteCount]) => {
                           const isRemoved = actorId === round.phaseOneRemoved;
                           return (
@@ -123,7 +119,7 @@ export function GameDetails({ game, initialLoyalists, initialTraitors }: GameDet
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       </div>
