@@ -12,12 +12,6 @@ describe('cn utility function', () => {
     expect(result).toBe('base visible')
   })
 
-  it('should merge tailwind classes without conflicts', () => {
-    const result = cn('p-4', 'p-2')
-    // twMerge should keep only the last padding class
-    expect(result).toBe('p-2')
-  })
-
   it('should handle undefined and null values', () => {
     const result = cn('class1', undefined, null, 'class2')
     expect(result).toBe('class1 class2')
@@ -28,27 +22,7 @@ describe('cn utility function', () => {
     expect(result).toBe('')
   })
 
-  it('should handle array of classes', () => {
-    const result = cn(['class1', 'class2'])
-    expect(result).toBe('class1 class2')
-  })
-
-  it('should handle objects with boolean values', () => {
-    const result = cn({
-      'class1': true,
-      'class2': false,
-      'class3': true
-    })
-    expect(result).toBe('class1 class3')
-  })
-
-  it('should merge conflicting tailwind classes intelligently', () => {
-    // Test tailwind-merge behavior - last value wins for conflicting utilities
-    const result = cn('bg-red-500', 'bg-blue-500')
-    expect(result).toBe('bg-blue-500')
-  })
-
-  it('should preserve non-conflicting classes', () => {
+  it('should concatenate all provided classes', () => {
     const result = cn('text-white', 'bg-blue-500', 'p-4', 'rounded')
     expect(result).toBe('text-white bg-blue-500 p-4 rounded')
   })

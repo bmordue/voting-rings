@@ -1,20 +1,9 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Histogram } from '@/components/Histogram';
 import { GameDetails } from '@/components/GameDetails';
 import { GameList } from '@/components/GameList';
 import { VotingGame, InfluenceVotingGame, runSimulation, calculateStatistics } from '@/lib/voting-game';
 import type { EndCondition, SimulationType, GameResult, GameType } from '@/lib/interfaces';
-import { Play, BarChart3, Eye, RotateCw, Info } from 'lucide-react';
-import { toast } from 'sonner';
 
 function App() {
   const [loyalists, setLoyalists] = useState(16);
@@ -29,20 +18,23 @@ function App() {
   const [sampleGame, setSampleGame] = useState<ReturnType<VotingGame['run']> | null>(null);
   const [selectedGame, setSelectedGame] = useState<GameResult | null>(null);
   const [isGameDialogOpen, setIsGameDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'all-games'>('overview');
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const handleRunSimulation = async () => {
     if (loyalists < 1 || traitors < 1) {
-      toast.error('Must have at least 1 loyalist and 1 traitor');
+      setStatusMessage('Must have at least 1 loyalist and 1 traitor');
       return;
     }
 
     if (iterations < 1) {
-      toast.error('Must run at least 1 iteration');
+      setStatusMessage('Must run at least 1 iteration');
       return;
     }
 
     setIsRunning(true);
     setProgress(0);
+    setStatusMessage(null);
 
     const batchSize = 100;
     const batches = Math.ceil(iterations / batchSize);
@@ -69,7 +61,7 @@ function App() {
     setSampleGame(gameResult);
     
     setIsRunning(false);
-    toast.success(`Completed ${iterations} simulations`);
+    setStatusMessage(`Completed ${iterations} simulations`);
   };
 
   const stats = results.length > 0 ? calculateStatistics(results) : null;
@@ -79,6 +71,7 @@ function App() {
     setSampleGame(null);
     setSelectedGame(null);
     setProgress(0);
+    setStatusMessage(null);
   };
 
   const handleSelectGame = (game: GameResult) => {
@@ -101,34 +94,31 @@ function App() {
           </p>
         </header>
 
+        {statusMessage && (
+          <div className="mb-4 px-4 py-2 rounded-md border bg-muted text-sm">
+            {statusMessage}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Info size={20} />
-                Game Parameters
-              </CardTitle>
-              <CardDescription>Configure the initial game state</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          {/* Parameters Card */}
+          <div className="bg-card text-card-foreground rounded-xl border py-6 shadow-sm">
+            <div className="px-6 mb-4">
+              <h2 className="font-semibold">ℹ️ Game Parameters</h2>
+              <p className="text-muted-foreground text-sm">Configure the initial game state</p>
+            </div>
+            <div className="px-6 space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="gameType">Voting Strategy</Label>
-                <Select 
-                  value={gameType} 
-                  onValueChange={(value) => {
-                    if (value === 'random' || value === 'fixate') {
-                      setGameType(value);
-                    }
-                  }}
+                <label htmlFor="gameType" className="text-sm font-medium">Voting Strategy</label>
+                <select
+                  id="gameType"
+                  value={gameType}
+                  onChange={(e) => setGameType(e.target.value as GameType)}
+                  className="w-full h-9 px-3 rounded-md border bg-background text-sm"
                 >
-                  <SelectTrigger id="gameType" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="random">Random</SelectItem>
-                    <SelectItem value="fixate">Fixate on Suspect</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value="random">Random</option>
+                  <option value="fixate">Fixate on Suspect</option>
+                </select>
                 <p className="text-xs text-muted-foreground">
                   {gameType === 'random' 
                     ? 'Loyalists vote randomly each round' 
@@ -137,110 +127,118 @@ function App() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="simulation-type">Simulation Type</Label>
-                <Select value={simulationType} onValueChange={(value) => setSimulationType(value as SimulationType)}>
-                  <SelectTrigger id="simulation-type" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="random">Random Voting</SelectItem>
-                    <SelectItem value="influence">Influence-Based</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label htmlFor="simulation-type" className="text-sm font-medium">Simulation Type</label>
+                <select
+                  id="simulation-type"
+                  value={simulationType}
+                  onChange={(e) => setSimulationType(e.target.value as SimulationType)}
+                  className="w-full h-9 px-3 rounded-md border bg-background text-sm"
+                >
+                  <option value="random">Random Voting</option>
+                  <option value="influence">Influence-Based</option>
+                </select>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="loyalists">Loyalists</Label>
-                  <Input
+                  <label htmlFor="loyalists" className="text-sm font-medium">Loyalists</label>
+                  <input
                     id="loyalists"
                     type="number"
                     value={loyalists}
                     onChange={(e) => setLoyalists(Math.max(1, parseInt(e.target.value) || 0))}
-                    className="w-20 text-right"
+                    className="w-20 text-right h-8 px-2 rounded-md border bg-background text-sm"
                     style={{ fontFamily: 'var(--font-mono)' }}
                     min={1}
                   />
                 </div>
-                <Slider
-                  value={[loyalists]}
-                  onValueChange={([value]) => setLoyalists(value)}
+                <input
+                  type="range"
+                  value={loyalists}
+                  onChange={(e) => setLoyalists(Number(e.target.value))}
                   min={1}
                   max={30}
                   step={1}
+                  className="w-full"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="traitors">Traitors</Label>
-                  <Input
+                  <label htmlFor="traitors" className="text-sm font-medium">Traitors</label>
+                  <input
                     id="traitors"
                     type="number"
                     value={traitors}
                     onChange={(e) => setTraitors(Math.max(1, parseInt(e.target.value) || 0))}
-                    className="w-20 text-right"
+                    className="w-20 text-right h-8 px-2 rounded-md border bg-background text-sm"
                     style={{ fontFamily: 'var(--font-mono)' }}
                     min={1}
                   />
                 </div>
-                <Slider
-                  value={[traitors]}
-                  onValueChange={([value]) => setTraitors(value)}
+                <input
+                  type="range"
+                  value={traitors}
+                  onChange={(e) => setTraitors(Number(e.target.value))}
                   min={1}
                   max={10}
                   step={1}
+                  className="w-full"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="iterations">Simulations</Label>
-                  <Input
+                  <label htmlFor="iterations" className="text-sm font-medium">Simulations</label>
+                  <input
                     id="iterations"
                     type="number"
                     value={iterations}
                     onChange={(e) => setIterations(Math.max(1, parseInt(e.target.value) || 0))}
-                    className="w-24 text-right"
+                    className="w-24 text-right h-8 px-2 rounded-md border bg-background text-sm"
                     style={{ fontFamily: 'var(--font-mono)' }}
                     min={1}
                   />
                 </div>
-                <Slider
-                  value={[iterations]}
-                  onValueChange={([value]) => setIterations(value)}
+                <input
+                  type="range"
+                  value={iterations}
+                  onChange={(e) => setIterations(Number(e.target.value))}
                   min={10}
                   max={10000}
                   step={10}
+                  className="w-full"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="endCondition">End Condition</Label>
-                <Select value={endCondition} onValueChange={(value) => setEndCondition(value as EndCondition)}>
-                  <SelectTrigger id="endCondition" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="first_traitor_removed">First Traitor Removed</SelectItem>
-                    <SelectItem value="all_one_type">All One Type Remaining</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label htmlFor="endCondition" className="text-sm font-medium">End Condition</label>
+                <select
+                  id="endCondition"
+                  value={endCondition}
+                  onChange={(e) => setEndCondition(e.target.value as EndCondition)}
+                  className="w-full h-9 px-3 rounded-md border bg-background text-sm"
+                >
+                  <option value="first_traitor_removed">First Traitor Removed</option>
+                  <option value="all_one_type">All One Type Remaining</option>
+                </select>
               </div>
 
               <div className="flex gap-2">
-                <Button 
+                <button 
                   onClick={handleRunSimulation} 
                   disabled={isRunning}
-                  className="flex-1"
+                  className="flex-1 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
                 >
-                  <Play size={18} className="mr-2" />
-                  {isRunning ? 'Running...' : 'Run Simulation'}
-                </Button>
+                  ▶ {isRunning ? 'Running...' : 'Run Simulation'}
+                </button>
                 {results.length > 0 && (
-                  <Button onClick={handleReset} variant="outline">
-                    <RotateCw size={18} />
-                  </Button>
+                  <button 
+                    onClick={handleReset}
+                    className="h-9 px-3 rounded-md border bg-background text-sm hover:bg-muted"
+                  >
+                    ↺
+                  </button>
                 )}
               </div>
 
@@ -250,22 +248,25 @@ function App() {
                     <span className="text-muted-foreground">Progress</span>
                     <span style={{ fontFamily: 'var(--font-mono)' }}>{Math.round(progress)}%</span>
                   </div>
-                  <Progress value={progress} />
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary rounded-full transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
+          {/* Statistics Card */}
           {stats && (
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 size={20} />
-                  Statistics
-                </CardTitle>
-                <CardDescription>Summary of {results.length.toLocaleString()} simulations</CardDescription>
-              </CardHeader>
-              <CardContent>
+            <div className="lg:col-span-2 bg-card text-card-foreground rounded-xl border py-6 shadow-sm">
+              <div className="px-6 mb-4">
+                <h2 className="font-semibold">📊 Statistics</h2>
+                <p className="text-muted-foreground text-sm">Summary of {results.length.toLocaleString()} simulations</p>
+              </div>
+              <div className="px-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
                     <div className="text-sm text-muted-foreground">Mean</div>
@@ -304,184 +305,214 @@ function App() {
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Simulation Results</CardTitle>
-            <CardDescription>
+        {/* Results Card */}
+        <div className="bg-card text-card-foreground rounded-xl border py-6 shadow-sm">
+          <div className="px-6 mb-4">
+            <h2 className="font-semibold">Simulation Results</h2>
+            <p className="text-muted-foreground text-sm">
               {results.length > 0 
                 ? `Explore ${results.length.toLocaleString()} simulated games`
                 : 'Run a simulation to see results'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="px-6">
             {results.length > 0 ? (
-              <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="overview">
-                    <BarChart3 size={16} className="mr-2" />
-                    Overview
-                  </TabsTrigger>
-                  <TabsTrigger value="all-games">
-                    <Eye size={16} className="mr-2" />
-                    All Games
-                  </TabsTrigger>
-                </TabsList>
+              <div>
+                {/* Tab buttons */}
+                <div className="flex gap-1 mb-4 border-b">
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+                      activeTab === 'overview' 
+                        ? 'border-primary text-foreground' 
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    📊 Overview
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('all-games')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+                      activeTab === 'all-games' 
+                        ? 'border-primary text-foreground' 
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    👁 All Games
+                  </button>
+                </div>
 
-                <TabsContent value="overview" className="space-y-4">
-                  <Histogram data={results} width={Math.min(1000, window.innerWidth - 100)} />
-                  
-                  {sampleGame && (
-                    <div className="flex justify-end">
-                      <Button 
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedGame(sampleGame);
-                          setIsGameDialogOpen(true);
-                        }}
-                      >
-                        <Eye size={18} className="mr-2" />
-                        View Sample Game
-                      </Button>
-                    </div>
-                  )}
-                </TabsContent>
+                {activeTab === 'overview' && (
+                  <div className="space-y-4">
+                    <Histogram data={results} width={Math.min(1000, window.innerWidth - 100)} />
+                    
+                    {sampleGame && (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => {
+                            setSelectedGame(sampleGame);
+                            setIsGameDialogOpen(true);
+                          }}
+                          className="px-4 py-2 rounded-md border bg-background text-sm hover:bg-muted"
+                        >
+                          👁 View Sample Game
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                <TabsContent value="all-games">
+                {activeTab === 'all-games' && (
                   <GameList
                     games={results}
                     onSelectGame={handleSelectGame}
                   />
-                </TabsContent>
-              </Tabs>
+                )}
+              </div>
             ) : (
               <div className="text-center text-muted-foreground py-12">
                 Run a simulation to view results
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Game Details Dialog */}
-        <Dialog open={isGameDialogOpen} onOpenChange={setIsGameDialogOpen}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {selectedGame?.id ? `Game #${selectedGame.id} Details` : 'Game Details'}
-              </DialogTitle>
-              <DialogDescription>
-                Step-by-step breakdown of this game simulation
-              </DialogDescription>
-            </DialogHeader>
-            {selectedGame && (
+        {isGameDialogOpen && selectedGame && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div 
+              className="fixed inset-0 bg-black/50" 
+              onClick={() => setIsGameDialogOpen(false)}
+            />
+            <div className="relative bg-card rounded-xl border shadow-lg max-w-3xl w-full mx-4 max-h-[80vh] overflow-y-auto p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {selectedGame.id ? `Game #${selectedGame.id} Details` : 'Game Details'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Step-by-step breakdown of this game simulation
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsGameDialogOpen(false)}
+                  className="h-8 w-8 rounded-md border flex items-center justify-center hover:bg-muted"
+                >
+                  ✕
+                </button>
+              </div>
               <GameDetails 
                 game={selectedGame} 
                 initialLoyalists={loyalists}
                 initialTraitors={traitors}
               />
+            </div>
+          </div>
+        )}
+
+        {/* Game Rules */}
+        <div className="mt-6 bg-card text-card-foreground rounded-xl border py-6 shadow-sm">
+          <div className="px-6 mb-4">
+            <h2 className="font-semibold">Game Rules</h2>
+          </div>
+          <div className="px-6">
+            <div className="flex gap-1 mb-4 border-b">
+              <button
+                onClick={() => setSimulationType('random')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+                  simulationType === 'random' 
+                    ? 'border-primary text-foreground' 
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Random Voting
+              </button>
+              <button
+                onClick={() => setSimulationType('influence')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+                  simulationType === 'influence' 
+                    ? 'border-primary text-foreground' 
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Influence-Based
+              </button>
+            </div>
+
+            {simulationType === 'random' ? (
+              <div className="space-y-4 text-sm">
+                <div>
+                  <h4 className="font-semibold mb-2">Setup</h4>
+                  <p className="text-muted-foreground">
+                    The game starts with a group of actors consisting of loyalists and traitors.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Phase 1: Voting</h4>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>Each actor votes to remove one other actor</li>
+                    <li>Loyalists vote randomly for anyone except themselves</li>
+                    <li>Traitors vote randomly for any loyalist</li>
+                    <li>The actor with the most votes is removed</li>
+                    <li>If there&apos;s a tie, a run-off vote occurs between tied actors only</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Phase 2: Random Removal</h4>
+                  <p className="text-muted-foreground">
+                    A random loyalist is removed from the group.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Game End</h4>
+                  <p className="text-muted-foreground mb-2">
+                    The game ending condition can be configured:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li><strong>First Traitor Removed:</strong> The game ends when either a traitor is removed (loyalists win) or no loyalists remain (traitors win).</li>
+                    <li><strong>All One Type Remaining:</strong> The game continues until all remaining actors are either loyalists or all traitors.</li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 text-sm">
+                <div>
+                  <h4 className="font-semibold mb-2">Setup</h4>
+                  <p className="text-muted-foreground">
+                    The game starts with a group of actors consisting of loyalists and traitors. Each actor has an influence score (1-100) against every other actor, set randomly at the start and never changing.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Phase 1: Voting</h4>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>Each actor votes to remove one other actor</li>
+                    <li>Loyalists vote for the actor they have the lowest influence over</li>
+                    <li>Traitors vote for the loyalist they have the lowest influence over</li>
+                    <li>The actor with the most votes is removed</li>
+                    <li>If there&apos;s a tie, a run-off vote occurs between tied actors only</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Phase 2: Influence-Based Removal</h4>
+                  <p className="text-muted-foreground">
+                    The loyalist with the highest total influence over all other actors is removed from the group.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Game End</h4>
+                  <p className="text-muted-foreground">
+                    The game ends when either a traitor is removed (loyalists win) or no loyalists remain (traitors win).
+                  </p>
+                </div>
+              </div>
             )}
-          </DialogContent>
-        </Dialog>
-
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Game Rules</CardTitle>
-          </CardHeader>
-          <CardContent className="prose prose-sm max-w-none">
-            <Tabs defaultValue={simulationType} value={simulationType} className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="random">Random Voting</TabsTrigger>
-                <TabsTrigger value="influence">Influence-Based</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="random">
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <h4 className="font-semibold mb-2">Setup</h4>
-                    <p className="text-muted-foreground">
-                      The game starts with a group of actors consisting of loyalists and traitors.
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold mb-2">Phase 1: Voting</h4>
-                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      <li>Each actor votes to remove one other actor</li>
-                      <li>Loyalists vote randomly for anyone except themselves</li>
-                      <li>Traitors vote randomly for any loyalist</li>
-                      <li>The actor with the most votes is removed</li>
-                      <li>If there's a tie, a run-off vote occurs between tied actors only</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Phase 2: Random Removal</h4>
-                    <p className="text-muted-foreground">
-                      A random loyalist is removed from the group.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Game End</h4>
-                <p className="text-muted-foreground mb-2">
-                  The game ending condition can be configured:
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Each actor votes to remove one other actor</li>
-                  <li><strong>Random Strategy:</strong> Loyalists vote randomly for anyone except themselves</li>
-                  <li><strong>Fixate Strategy:</strong> Each loyalist votes for the same suspect until that actor is removed, then selects a new random suspect</li>
-                  <li>Traitors vote randomly for any loyalist</li>
-                  <li>The actor with the most votes is removed</li>
-                  <li>If there's a tie, a run-off vote occurs between tied actors only</li>
-                  <li><strong>First Traitor Removed:</strong> The game ends when either a traitor is removed (loyalists win) or no loyalists remain (traitors win).</li>
-                  <li><strong>All One Type Remaining:</strong> The game continues until all remaining actors are either loyalists (loyalists win) or all traitors (traitors win).</li>
-                </ul>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="influence">
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <h4 className="font-semibold mb-2">Setup</h4>
-                    <p className="text-muted-foreground">
-                      The game starts with a group of actors consisting of loyalists and traitors. Each actor has an influence score (1-100) against every other actor, set randomly at the start and never changing.
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold mb-2">Phase 1: Voting</h4>
-                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      <li>Each actor votes to remove one other actor</li>
-                      <li>Loyalists vote for the actor they have the lowest influence over</li>
-                      <li>Traitors vote for the loyalist they have the lowest influence over</li>
-                      <li>The actor with the most votes is removed</li>
-                      <li>If there's a tie, a run-off vote occurs between tied actors only</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Phase 2: Influence-Based Removal</h4>
-                    <p className="text-muted-foreground">
-                      The loyalist with the highest total influence over all other actors is removed from the group.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Game End</h4>
-                    <p className="text-muted-foreground">
-                      The game ends when either a traitor is removed (loyalists win) or no loyalists remain (traitors win).
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
