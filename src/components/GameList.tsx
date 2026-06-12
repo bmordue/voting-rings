@@ -1,12 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { GameResult } from '@/lib/interfaces';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface GameListProps {
   games: GameResult[];
@@ -25,16 +18,13 @@ export function GameList({ games, onSelectGame }: GameListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
 
-  // Filter and sort games
   const filteredAndSortedGames = useMemo(() => {
     let result = [...games];
 
-    // Apply outcome filter
     if (outcomeFilter !== 'all') {
       result = result.filter(game => game.outcome === outcomeFilter);
     }
 
-    // Apply search filter (by game ID)
     if (searchQuery.trim()) {
       const query = searchQuery.trim();
       result = result.filter(game => 
@@ -42,7 +32,6 @@ export function GameList({ games, onSelectGame }: GameListProps) {
       );
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       let comparison = 0;
       
@@ -64,13 +53,11 @@ export function GameList({ games, onSelectGame }: GameListProps) {
     return result;
   }, [games, outcomeFilter, searchQuery, sortField, sortDirection]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredAndSortedGames.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedGames = filteredAndSortedGames.slice(startIndex, endIndex);
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [outcomeFilter, searchQuery, sortField, sortDirection, itemsPerPage]);
@@ -85,41 +72,27 @@ export function GameList({ games, onSelectGame }: GameListProps) {
   };
 
   const getOutcomeBadge = (outcome: GameResult['outcome']) => {
-    switch (outcome) {
-      case 'traitor_removed':
-        return (
-          <Badge className="bg-loyalist text-loyalist-foreground hover:bg-loyalist">
-            First Traitor Removed
-          </Badge>
-        );
-      case 'all_loyalists':
-        return (
-          <Badge className="bg-loyalist text-loyalist-foreground hover:bg-loyalist">
-            All Loyalists
-          </Badge>
-        );
-      case 'no_loyalists':
-        return (
-          <Badge className="bg-traitor text-traitor-foreground hover:bg-traitor">
-            No Loyalists
-          </Badge>
-        );
-      case 'all_traitors':
-        return (
-          <Badge className="bg-traitor text-traitor-foreground hover:bg-traitor">
-            All Traitors
-          </Badge>
-        );
-    }
+    const isLoyalist = outcome === 'traitor_removed' || outcome === 'all_loyalists';
+    const label = {
+      'traitor_removed': 'First Traitor Removed',
+      'all_loyalists': 'All Loyalists',
+      'no_loyalists': 'No Loyalists',
+      'all_traitors': 'All Traitors'
+    }[outcome];
+    
+    return (
+      <span 
+        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white"
+        style={{ backgroundColor: isLoyalist ? 'var(--loyalist)' : 'var(--traitor)' }}
+      >
+        {label}
+      </span>
+    );
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
+  const SortIndicator = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
-    return sortDirection === 'asc' ? (
-      <ArrowUp size={14} className="inline ml-1" />
-    ) : (
-      <ArrowDown size={14} className="inline ml-1" />
-    );
+    return <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>;
   };
 
   return (
@@ -127,40 +100,35 @@ export function GameList({ games, onSelectGame }: GameListProps) {
       {/* Filters and controls */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1">
-          <Input
+          <input
             placeholder="Search by game number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-xs"
+            className="max-w-xs h-9 px-3 rounded-md border bg-background text-sm w-full"
           />
         </div>
         <div className="flex gap-2">
-          <Select value={outcomeFilter} onValueChange={(value) => setOutcomeFilter(value as OutcomeFilter)}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Outcomes</SelectItem>
-              <SelectItem value="traitor_removed">First Traitor Removed</SelectItem>
-              <SelectItem value="all_loyalists">All Loyalists</SelectItem>
-              <SelectItem value="no_loyalists">No Loyalists</SelectItem>
-              <SelectItem value="all_traitors">All Traitors</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select 
-            value={itemsPerPage.toString()} 
-            onValueChange={(value) => setItemsPerPage(Number(value))}
+          <select 
+            value={outcomeFilter} 
+            onChange={(e) => setOutcomeFilter(e.target.value as OutcomeFilter)}
+            className="h-9 px-3 rounded-md border bg-background text-sm w-[200px]"
           >
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="50">50 per page</SelectItem>
-              <SelectItem value="100">100 per page</SelectItem>
-              <SelectItem value="200">200 per page</SelectItem>
-              <SelectItem value="500">500 per page</SelectItem>
-            </SelectContent>
-          </Select>
+            <option value="all">All Outcomes</option>
+            <option value="traitor_removed">First Traitor Removed</option>
+            <option value="all_loyalists">All Loyalists</option>
+            <option value="no_loyalists">No Loyalists</option>
+            <option value="all_traitors">All Traitors</option>
+          </select>
+          <select 
+            value={itemsPerPage.toString()} 
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            className="h-9 px-3 rounded-md border bg-background text-sm w-[120px]"
+          >
+            <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
+            <option value="200">200 per page</option>
+            <option value="500">500 per page</option>
+          </select>
         </div>
       </div>
 
@@ -171,81 +139,71 @@ export function GameList({ games, onSelectGame }: GameListProps) {
       </div>
 
       {/* Table */}
-      <ScrollArea className="h-[600px] rounded-md border">
-        <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
-            <TableRow>
-              <TableHead 
-                className="cursor-pointer select-none hover:bg-muted/50"
+      <div className="h-[600px] overflow-y-auto rounded-md border">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 bg-background z-10 border-b">
+            <tr>
+              <th 
+                className="text-left px-4 py-3 font-medium cursor-pointer select-none hover:bg-muted/50"
                 onClick={() => handleSort('id')}
               >
-                <div className="flex items-center">
-                  Game #
-                  <SortIcon field="id" />
-                </div>
-              </TableHead>
-              <TableHead 
-                className="cursor-pointer select-none hover:bg-muted/50"
+                Game #<SortIndicator field="id" />
+              </th>
+              <th 
+                className="text-left px-4 py-3 font-medium cursor-pointer select-none hover:bg-muted/50"
                 onClick={() => handleSort('rounds')}
               >
-                <div className="flex items-center">
-                  Rounds
-                  <SortIcon field="rounds" />
-                </div>
-              </TableHead>
-              <TableHead 
-                className="cursor-pointer select-none hover:bg-muted/50"
+                Rounds<SortIndicator field="rounds" />
+              </th>
+              <th 
+                className="text-left px-4 py-3 font-medium cursor-pointer select-none hover:bg-muted/50"
                 onClick={() => handleSort('outcome')}
               >
-                <div className="flex items-center">
-                  Outcome
-                  <SortIcon field="outcome" />
-                </div>
-              </TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+                Outcome<SortIndicator field="outcome" />
+              </th>
+              <th className="text-left px-4 py-3 font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
             {paginatedGames.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground h-32">
+              <tr>
+                <td colSpan={4} className="text-center text-muted-foreground h-32 px-4">
                   No games found matching your criteria
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : (
               paginatedGames.map((game) => (
-                <TableRow 
+                <tr 
                   key={game.id} 
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/50 border-b"
                   onClick={() => onSelectGame(game)}
                 >
-                  <TableCell style={{ fontFamily: 'var(--font-mono)' }} className="font-medium">
+                  <td className="px-4 py-3 font-medium" style={{ fontFamily: 'var(--font-mono)' }}>
                     {game.id}
-                  </TableCell>
-                  <TableCell style={{ fontFamily: 'var(--font-mono)' }}>
+                  </td>
+                  <td className="px-4 py-3" style={{ fontFamily: 'var(--font-mono)' }}>
                     {game.totalRounds}
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-4 py-3">
                     {getOutcomeBadge(game.outcome)}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      className="px-3 py-1 rounded-md border bg-background text-xs hover:bg-muted"
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelectGame(game);
                       }}
                     >
                       View Details
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                    </button>
+                  </td>
+                </tr>
               ))
             )}
-          </TableBody>
-        </Table>
-      </ScrollArea>
+          </tbody>
+        </table>
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -254,41 +212,37 @@ export function GameList({ games, onSelectGame }: GameListProps) {
             Page {currentPage} of {totalPages}
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="h-8 px-2 rounded-md border bg-background text-sm hover:bg-muted disabled:opacity-50 disabled:pointer-events-none"
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
             >
-              <ChevronsLeft size={16} />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+              «
+            </button>
+            <button
+              className="h-8 px-2 rounded-md border bg-background text-sm hover:bg-muted disabled:opacity-50 disabled:pointer-events-none"
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
             >
-              <ChevronLeft size={16} />
-            </Button>
+              ‹
+            </button>
             <span className="text-sm" style={{ fontFamily: 'var(--font-mono)' }}>
               {currentPage} / {totalPages}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="h-8 px-2 rounded-md border bg-background text-sm hover:bg-muted disabled:opacity-50 disabled:pointer-events-none"
               onClick={() => setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
             >
-              <ChevronRight size={16} />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+              ›
+            </button>
+            <button
+              className="h-8 px-2 rounded-md border bg-background text-sm hover:bg-muted disabled:opacity-50 disabled:pointer-events-none"
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages}
             >
-              <ChevronsRight size={16} />
-            </Button>
+              »
+            </button>
           </div>
         </div>
       )}
