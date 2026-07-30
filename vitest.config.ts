@@ -7,6 +7,7 @@ const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 export default defineConfig({
   plugins: [react()],
   test: {
+    pool: 'threads',
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
